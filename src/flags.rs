@@ -4,7 +4,7 @@
 extern crate bgfx_sys;
 
 bitflags! {
-    flags StateFlags: u64 {
+    pub flags StateFlags: u64 {
         const STATE_RGB_WRITE = bgfx_sys::BGFX_STATE_RGB_WRITE,
         const STATE_ALPHA_WRITE = bgfx_sys::BGFX_STATE_ALPHA_WRITE,
         const STATE_DEPTH_WRITE = bgfx_sys::BGFX_STATE_DEPTH_WRITE,
@@ -16,7 +16,6 @@ bitflags! {
         const STATE_DEPTH_TEST_NOTEQUAL = bgfx_sys::BGFX_STATE_DEPTH_TEST_NOTEQUAL,
         const STATE_DEPTH_TEST_NEVER = bgfx_sys::BGFX_STATE_DEPTH_TEST_NEVER,
         const STATE_DEPTH_TEST_ALWAYS = bgfx_sys::BGFX_STATE_DEPTH_TEST_ALWAYS,
-        const STATE_DEPTH_TEST_SHIFT = bgfx_sys::BGFX_STATE_DEPTH_TEST_SHIFT,
         const STATE_DEPTH_TEST_MASK = bgfx_sys::BGFX_STATE_DEPTH_TEST_MASK,
         const STATE_BLEND_ZERO = bgfx_sys::BGFX_STATE_BLEND_ZERO,
         const STATE_BLEND_ONE = bgfx_sys::BGFX_STATE_BLEND_ONE,
@@ -31,29 +30,23 @@ bitflags! {
         const STATE_BLEND_SRC_ALPHA_SAT = bgfx_sys::BGFX_STATE_BLEND_SRC_ALPHA_SAT,
         const STATE_BLEND_FACTOR = bgfx_sys::BGFX_STATE_BLEND_FACTOR,
         const STATE_BLEND_INV_FACTOR = bgfx_sys::BGFX_STATE_BLEND_INV_FACTOR,
-        const STATE_BLEND_SHIFT = bgfx_sys::BGFX_STATE_BLEND_SHIFT,
         const STATE_BLEND_MASK = bgfx_sys::BGFX_STATE_BLEND_MASK,
         const STATE_BLEND_EQUATION_ADD = bgfx_sys::BGFX_STATE_BLEND_EQUATION_ADD,
         const STATE_BLEND_EQUATION_SUB = bgfx_sys::BGFX_STATE_BLEND_EQUATION_SUB,
         const STATE_BLEND_EQUATION_REVSUB = bgfx_sys::BGFX_STATE_BLEND_EQUATION_REVSUB,
         const STATE_BLEND_EQUATION_MIN = bgfx_sys::BGFX_STATE_BLEND_EQUATION_MIN,
         const STATE_BLEND_EQUATION_MAX = bgfx_sys::BGFX_STATE_BLEND_EQUATION_MAX,
-        const STATE_BLEND_EQUATION_SHIFT = bgfx_sys::BGFX_STATE_BLEND_EQUATION_SHIFT,
         const STATE_BLEND_EQUATION_MASK = bgfx_sys::BGFX_STATE_BLEND_EQUATION_MASK,
         const STATE_BLEND_INDEPENDENT = bgfx_sys::BGFX_STATE_BLEND_INDEPENDENT,
         const STATE_CULL_CW = bgfx_sys::BGFX_STATE_CULL_CW,
         const STATE_CULL_CCW = bgfx_sys::BGFX_STATE_CULL_CCW,
-        const STATE_CULL_SHIFT = bgfx_sys::BGFX_STATE_CULL_SHIFT,
         const STATE_CULL_MASK = bgfx_sys::BGFX_STATE_CULL_MASK,
-        const STATE_ALPHA_REF_SHIFT = bgfx_sys::BGFX_STATE_ALPHA_REF_SHIFT,
         const STATE_ALPHA_REF_MASK = bgfx_sys::BGFX_STATE_ALPHA_REF_MASK,
         const STATE_PT_TRISTRIP = bgfx_sys::BGFX_STATE_PT_TRISTRIP,
         const STATE_PT_LINES = bgfx_sys::BGFX_STATE_PT_LINES,
         const STATE_PT_LINESTRIP = bgfx_sys::BGFX_STATE_PT_LINESTRIP,
         const STATE_PT_POINTS = bgfx_sys::BGFX_STATE_PT_POINTS,
-        const STATE_PT_SHIFT = bgfx_sys::BGFX_STATE_PT_SHIFT,
         const STATE_PT_MASK = bgfx_sys::BGFX_STATE_PT_MASK,
-        const STATE_POINT_SIZE_SHIFT = bgfx_sys::BGFX_STATE_POINT_SIZE_SHIFT,
         const STATE_POINT_SIZE_MASK = bgfx_sys::BGFX_STATE_POINT_SIZE_MASK,
         const STATE_MSAA = bgfx_sys::BGFX_STATE_MSAA,
         const STATE_RESERVED_MASK = bgfx_sys::BGFX_STATE_RESERVED_MASK,
@@ -70,6 +63,14 @@ bitflags! {
         const STATE_BLEND_LINEAR_BURN = bgfx_sys::BGFX_STATE_BLEND_LINEAR_BURN,
     }
 }
+
+pub const STATE_DEPTH_TEST_SHIFT: usize = bgfx_sys::BGFX_STATE_DEPTH_TEST_SHIFT as usize;
+pub const STATE_BLEND_SHIFT: usize = bgfx_sys::BGFX_STATE_BLEND_SHIFT as usize;
+pub const STATE_BLEND_EQUATION_SHIFT: usize = bgfx_sys::BGFX_STATE_BLEND_EQUATION_SHIFT as usize;
+pub const STATE_CULL_SHIFT: usize = bgfx_sys::BGFX_STATE_CULL_SHIFT as usize;
+pub const STATE_ALPHA_REF_SHIFT: usize = bgfx_sys::BGFX_STATE_ALPHA_REF_SHIFT as usize;
+pub const STATE_PT_SHIFT: usize = bgfx_sys::BGFX_STATE_PT_SHIFT as usize;
+pub const STATE_POINT_SIZE_SHIFT: usize = bgfx_sys::BGFX_STATE_POINT_SIZE_SHIFT as usize;
 
 impl Default for StateFlags {
     #[inline]
@@ -149,7 +150,7 @@ pub fn state_blend_func_rt_3e(src: u32, dst: u32, equation: u64) -> StateFlags {
 }
 
 bitflags! {
-    flags BufferFlags: u16 {
+    pub flags BufferFlags: u16 {
         const BUFFER_NONE = bgfx_sys::BGFX_BUFFER_NONE,
         const BUFFER_COMPUTE_FORMAT_8X1 = bgfx_sys::BGFX_BUFFER_COMPUTE_FORMAT_8X1,
         const BUFFER_COMPUTE_FORMAT_8X2 = bgfx_sys::BGFX_BUFFER_COMPUTE_FORMAT_8X2,
@@ -160,12 +161,10 @@ bitflags! {
         const BUFFER_COMPUTE_FORMAT_32X1 = bgfx_sys::BGFX_BUFFER_COMPUTE_FORMAT_32X1,
         const BUFFER_COMPUTE_FORMAT_32X2 = bgfx_sys::BGFX_BUFFER_COMPUTE_FORMAT_32X2,
         const BUFFER_COMPUTE_FORMAT_32X4 = bgfx_sys::BGFX_BUFFER_COMPUTE_FORMAT_32X4,
-        const BUFFER_COMPUTE_FORMAT_SHIFT = bgfx_sys::BGFX_BUFFER_COMPUTE_FORMAT_SHIFT,
         const BUFFER_COMPUTE_FORMAT_MASK = bgfx_sys::BGFX_BUFFER_COMPUTE_FORMAT_MASK,
         const BUFFER_COMPUTE_TYPE_UINT = bgfx_sys::BGFX_BUFFER_COMPUTE_TYPE_UINT,
         const BUFFER_COMPUTE_TYPE_INT = bgfx_sys::BGFX_BUFFER_COMPUTE_TYPE_INT,
         const BUFFER_COMPUTE_TYPE_FLOAT = bgfx_sys::BGFX_BUFFER_COMPUTE_TYPE_FLOAT,
-        const BUFFER_COMPUTE_TYPE_SHIFT = bgfx_sys::BGFX_BUFFER_COMPUTE_TYPE_SHIFT,
         const BUFFER_COMPUTE_TYPE_MASK = bgfx_sys::BGFX_BUFFER_COMPUTE_TYPE_MASK,
         const BUFFER_COMPUTE_READ = bgfx_sys::BGFX_BUFFER_COMPUTE_READ,
         const BUFFER_COMPUTE_WRITE = bgfx_sys::BGFX_BUFFER_COMPUTE_WRITE,
@@ -176,6 +175,9 @@ bitflags! {
     }
 }
 
+pub const BUFFER_COMPUTE_FORMAT_SHIFT: usize = bgfx_sys::BGFX_BUFFER_COMPUTE_FORMAT_SHIFT as usize;
+pub const BUFFER_COMPUTE_TYPE_SHIFT: usize = bgfx_sys::BGFX_BUFFER_COMPUTE_TYPE_SHIFT as usize;
+
 impl Default for BufferFlags {
     #[inline]
     fn default() -> BufferFlags {
@@ -184,7 +186,7 @@ impl Default for BufferFlags {
 }
 
 bitflags! {
-    flags ClearFlags: u16 {
+    pub flags ClearFlags: u16 {
         const CLEAR_NONE = bgfx_sys::BGFX_CLEAR_NONE,
         const CLEAR_COLOR = bgfx_sys::BGFX_CLEAR_COLOR,
         const CLEAR_DEPTH = bgfx_sys::BGFX_CLEAR_DEPTH,
@@ -212,7 +214,7 @@ impl Default for ClearFlags {
 }
 
 bitflags! {
-    flags DebugFlags: u32 {
+    pub flags DebugFlags: u32 {
         const DEBUG_NONE = bgfx_sys::BGFX_DEBUG_NONE,
         const DEBUG_WIREFRAME = bgfx_sys::BGFX_DEBUG_WIREFRAME,
         const DEBUG_IFH = bgfx_sys::BGFX_DEBUG_IFH,
@@ -229,7 +231,7 @@ impl Default for DebugFlags {
 }
 
 bitflags! {
-    flags ResetFlags: u32 {
+    pub flags ResetFlags: u32 {
         const RESET_NONE = bgfx_sys::BGFX_RESET_NONE,
         const RESET_FULLSCREEN = bgfx_sys::BGFX_RESET_FULLSCREEN,
         const RESET_FULLSCREEN_SHIFT = bgfx_sys::BGFX_RESET_FULLSCREEN_SHIFT,

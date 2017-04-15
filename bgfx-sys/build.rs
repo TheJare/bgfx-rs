@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/ISC
 
 use std::env;
-use std::io::{Read, Write};
+use std::io::{Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -33,26 +33,55 @@ fn build_msvc(bitness: u32) {
     let vs_release = match vs_version.as_ref() {
         "12.0" => "2013",
         "14.0" => "2015",
+        "15.0" => "2017",
         _ => panic!(format!("Unknown Visual Studio version: {:?}", vs_version)),
     };
 
     Command::new("bx/tools/bin/windows/genie.exe")
         .current_dir("bgfx")
         .arg("--with-dynamic-runtime")
+        // .arg(format!("--with-windows={}",
+        //              env::var("WindowsSDKVersion")
+        //                  .unwrap_or("8.1".to_string())
+        //                  .replace("\\", "")))
         .arg(format!("vs{}", vs_release))
         .output()
         .expect("Failed to generate project files");
 
     let status = Command::new("MSBuild.exe")
-                     .current_dir("bgfx")
-                     .arg("/p:Configuration=Release")
-                     .arg(format!("/p:Platform={}", platform))
-                     .arg(format!(".build/projects/vs{}/bgfx.vcxproj", vs_release))
-                     .status()
-                     .expect("Failed to build bgfx");
+        .current_dir("bgfx")
+        .arg("/p:Configuration=Release")
+        .arg(format!("/p:Platform={}", platform))
+        .arg(format!(".build/projects/vs{}/bgfx.vcxproj", vs_release))
+        .status()
+        .expect("Failed to build bgfx");
 
     if status.code().unwrap() != 0 {
         panic!("Failed to build bgfx");
+    }
+
+    let status = Command::new("MSBuild.exe")
+        .current_dir("bgfx")
+        .arg("/p:Configuration=Release")
+        .arg(format!("/p:Platform={}", platform))
+        .arg(format!(".build/projects/vs{}/bx.vcxproj", vs_release))
+        .status()
+        .expect("Failed to build bx");
+
+    if status.code().unwrap() != 0 {
+        panic!("Failed to build bx");
+    }
+
+    let status = Command::new("MSBuild.exe")
+        .current_dir("bgfx")
+        .arg("/p:Configuration=Release")
+        .arg(format!("/p:Platform={}", platform))
+        .arg(format!(".build/projects/vs{}/bimg.vcxproj", vs_release))
+        .status()
+        .expect("Failed to build bimg");
+
+    if status.code().unwrap() != 0 {
+        panic!("Failed to build bimg");
     }
 
     let mut path = PathBuf::from(env::current_dir().unwrap());
@@ -62,8 +91,11 @@ fn build_msvc(bitness: u32) {
     path.push("bin");
 
     println!("cargo:rustc-link-lib=static=bgfxRelease");
+    println!("cargo:rustc-link-lib=static=bxRelease");
+    println!("cargo:rustc-link-lib=static=bimgRelease");
     println!("cargo:rustc-link-lib=gdi32");
     println!("cargo:rustc-link-lib=user32");
+    println!("cargo:rustc-link-lib=psapi");
     println!("cargo:rustc-link-search=native={}", path.as_os_str().to_str().unwrap());
 }
 
@@ -85,11 +117,11 @@ fn build_gmake(bitness: u32, profile: &str, platform: &str) {
 
     // Generate makefiles
     let status = Command::new("make")
-                     .arg("-C")
-                     .arg("bgfx")
-                     .arg(format!(".build/projects/{}", project_name))
-                     .status()
-                     .expect("Failed to generate makefiles");
+        .arg("-C")
+        .arg("bgfx")
+        .arg(format!(".build/projects/{}", project_name))
+        .status()
+        .expect("Failed to generate makefiles");
 
     if status.code().unwrap() != 0 {
         panic!("Failed to generate makefiles.");
@@ -104,15 +136,17 @@ fn build_gmake(bitness: u32, profile: &str, platform: &str) {
 
     // Build bgfx
     let status = Command::new("make")
-                     .env("CFLAGS", cflags)
-                     .arg("-R")
-                     .arg("-C")
-                     .arg(format!("bgfx/.build/projects/{}", project_name))
-                     .arg(format!("config={}{}", profile, bitness))
-                     .arg("verbose=1")
-                     .arg("bgfx")
-                     .status()
-                     .expect("Failed to build bgfx");
+        .env("CFLAGS", cflags)
+        .arg("-R")
+        .arg("-C")
+        .arg(format!("bgfx/.build/projects/{}", project_name))
+        .arg(format!("config={}{}", profile, bitness))
+        .arg("verbose=1")
+        .arg("bgfx")
+        .arg("bx")
+        .arg("bimg")
+        .status()
+        .expect("Failed to build bgfx");
 
     if status.code().unwrap() != 0 {
         panic!("Failed to build bgfx.");
@@ -125,8 +159,14 @@ fn build_gmake(bitness: u32, profile: &str, platform: &str) {
     path.push(output_name);
     path.push("bin");
 
-    let config = if profile == "debug" { "Debug" } else { "Release" };
+    let config = if profile == "debug" {
+        "Debug"
+    } else {
+        "Release"
+    };
     println!("cargo:rustc-link-lib=bgfx{}", config);
+    println!("cargo:rustc-link-lib=bx{}", config);
+    println!("cargo:rustc-link-lib=bimg{}", config);
     println!("cargo:rustc-link-lib=stdc++");
     println!("cargo:rustc-link-search=native={}", path.as_os_str().to_str().unwrap());
 
@@ -161,13 +201,13 @@ fn should_link_metal() -> bool {
                 SION_MIN_REQUIRED__\n#else\nv=1\n#endif";
 
     let mut cc = Command::new("cc")
-                     .arg("-xc")
-                     .arg("-E")
-                     .arg("-")
-                     .stdin(Stdio::piped())
-                     .stdout(Stdio::piped())
-                     .spawn()
-                     .unwrap();
+        .arg("-xc")
+        .arg("-E")
+        .arg("-")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
 
     {
         let mut stdin = cc.stdin.take().unwrap();
@@ -176,7 +216,10 @@ fn should_link_metal() -> bool {
 
     let output = cc.wait_with_output().unwrap();
     let output_str = String::from_utf8(output.stdout).unwrap();
-    let ver_line = output_str.lines().find(|l| l.starts_with("v=")).unwrap();
+    let ver_line = output_str
+        .lines()
+        .find(|l| l.starts_with("v="))
+        .unwrap();
     let ver_str = &ver_line[2..];
     let ver = ver_str.parse::<u32>().unwrap();
 

@@ -73,6 +73,7 @@ pub mod flags;
 
 pub use flags::*;
 
+
 /// Autoselect adapter.
 pub const PCI_ID_NONE: u16 = bgfx_sys::BGFX_PCI_ID_NONE;
 
@@ -89,11 +90,11 @@ pub const PCI_ID_INTEL: u16 = bgfx_sys::BGFX_PCI_ID_INTEL;
 pub const PCI_ID_NVIDIA: u16 = bgfx_sys::BGFX_PCI_ID_NVIDIA;
 
 /// Renderer backend type.
-#[repr(u32)]
+#[repr(i32)]
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum RendererType {
     /// No rendering.
-    Null = bgfx_sys::BGFX_RENDERER_TYPE_NULL,
+    Null = bgfx_sys::BGFX_RENDERER_TYPE_NOOP,
 
     /// Direct3D 9.0.
     Direct3D9 = bgfx_sys::BGFX_RENDERER_TYPE_DIRECT3D9,
@@ -122,7 +123,7 @@ pub enum RendererType {
 
 impl RendererType {
 
-    fn from_u32(n: u32) -> Option<RendererType> {
+    fn from_i32(n: i32) -> Option<RendererType> {
         if n <= bgfx_sys::BGFX_RENDERER_TYPE_COUNT {
             Some(unsafe { mem::transmute(n) })
         } else {
@@ -133,7 +134,7 @@ impl RendererType {
 }
 
 /// `render_frame()` results.
-#[repr(u32)]
+#[repr(i32)]
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum RenderFrame {
     /// No context is available. This usually means the main thread has exited.
@@ -148,7 +149,7 @@ pub enum RenderFrame {
 
 impl RenderFrame {
 
-    fn from_u32(n: u32) -> Option<RenderFrame> {
+    fn from_i32(n: i32) -> Option<RenderFrame> {
         if n < bgfx_sys::BGFX_RENDER_FRAME_COUNT {
             Some(unsafe { mem::transmute(n) })
         } else {
@@ -163,52 +164,52 @@ impl RenderFrame {
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum Attrib {
     /// Position.
-    Position = bgfx_sys::BGFX_ATTRIB_POSITION,
+    Position = bgfx_sys::BGFX_ATTRIB_POSITION as u32,
 
     /// Normal.
-    Normal = bgfx_sys::BGFX_ATTRIB_NORMAL,
+    Normal = bgfx_sys::BGFX_ATTRIB_NORMAL as u32,
 
     /// Tangent.
-    Tangent = bgfx_sys::BGFX_ATTRIB_TANGENT,
+    Tangent = bgfx_sys::BGFX_ATTRIB_TANGENT as u32,
 
     /// Bitangent.
-    Bitangent = bgfx_sys::BGFX_ATTRIB_BITANGENT,
+    Bitangent = bgfx_sys::BGFX_ATTRIB_BITANGENT as u32,
 
     /// Color 0.
-    Color0 = bgfx_sys::BGFX_ATTRIB_COLOR0,
+    Color0 = bgfx_sys::BGFX_ATTRIB_COLOR0 as u32,
 
     /// Color 1.
-    Color1 = bgfx_sys::BGFX_ATTRIB_COLOR1,
+    Color1 = bgfx_sys::BGFX_ATTRIB_COLOR1 as u32,
 
     /// Index list.
-    Indices = bgfx_sys::BGFX_ATTRIB_INDICES,
+    Indices = bgfx_sys::BGFX_ATTRIB_INDICES as u32,
 
     /// Bone weight.
-    Weight = bgfx_sys::BGFX_ATTRIB_WEIGHT,
+    Weight = bgfx_sys::BGFX_ATTRIB_WEIGHT as u32,
 
     /// Texture coordinate 0.
-    TexCoord0 = bgfx_sys::BGFX_ATTRIB_TEXCOORD0,
+    TexCoord0 = bgfx_sys::BGFX_ATTRIB_TEXCOORD0 as u32,
 
     /// Texture coordinate 1.
-    TexCoord1 = bgfx_sys::BGFX_ATTRIB_TEXCOORD1,
+    TexCoord1 = bgfx_sys::BGFX_ATTRIB_TEXCOORD1 as u32,
 
     /// Texture coordinate 2.
-    TexCoord2 = bgfx_sys::BGFX_ATTRIB_TEXCOORD2,
+    TexCoord2 = bgfx_sys::BGFX_ATTRIB_TEXCOORD2 as u32,
 
     /// Texture coordinate 3.
-    TexCoord3 = bgfx_sys::BGFX_ATTRIB_TEXCOORD3,
+    TexCoord3 = bgfx_sys::BGFX_ATTRIB_TEXCOORD3 as u32,
 
     /// Texture coordinate 4.
-    TexCoord4 = bgfx_sys::BGFX_ATTRIB_TEXCOORD4,
+    TexCoord4 = bgfx_sys::BGFX_ATTRIB_TEXCOORD4 as u32,
 
     /// Texture coordinate 5.
-    TexCoord5 = bgfx_sys::BGFX_ATTRIB_TEXCOORD5,
+    TexCoord5 = bgfx_sys::BGFX_ATTRIB_TEXCOORD5 as u32,
 
     /// Texture coordinate 6.
-    TexCoord6 = bgfx_sys::BGFX_ATTRIB_TEXCOORD6,
+    TexCoord6 = bgfx_sys::BGFX_ATTRIB_TEXCOORD6 as u32,
 
     /// Texture coordinate 7.
-    TexCoord7 = bgfx_sys::BGFX_ATTRIB_TEXCOORD7,
+    TexCoord7 = bgfx_sys::BGFX_ATTRIB_TEXCOORD7 as u32,
 }
 
 /// Vertex attribute type.
@@ -285,7 +286,7 @@ impl<'b> Memory<'b> {
     #[inline]
     pub fn copy<'d, T>(_bgfx: &'b Bgfx, data: &'d [T]) -> Memory<'b> {
         unsafe {
-            let handle = bgfx_sys::bgfx_copy(data.as_ptr() as *const libc::c_void,
+            let handle = bgfx_sys::bgfx_copy(data.as_ptr() as *const ::std::os::raw::c_void,
                                              mem::size_of_val(data) as u32);
             Memory { handle: handle, _phantom: PhantomData }
         }
@@ -302,7 +303,7 @@ impl<'b> Memory<'b> {
         // TODO: The lifetime setup probably isn't 100% complete. Need to figure out how we can
         // guarantee that `data` will outlast `_bgfx`.
         unsafe {
-            let handle = bgfx_sys::bgfx_make_ref(data.as_ptr() as *const libc::c_void,
+            let handle = bgfx_sys::bgfx_make_ref(data.as_ptr() as *const ::std::os::raw::c_void,
                                                  mem::size_of_val(data) as u32);
             Memory { handle: handle, _phantom: PhantomData }
         }
@@ -326,7 +327,7 @@ impl<'s> Program<'s> {
     #[inline]
     pub fn new(vsh: Shader<'s>, fsh: Shader<'s>) -> Program<'s> {
         unsafe {
-            let handle = bgfx_sys::bgfx_create_program(vsh.handle, fsh.handle, 0);
+            let handle = bgfx_sys::bgfx_create_program(vsh.handle, fsh.handle, false);
             Program { handle: handle, _vsh: vsh, _fsh: fsh }
         }
     }
@@ -514,8 +515,8 @@ impl VertexDeclBuilder {
                                            attrib as bgfx_sys::bgfx_attrib_t,
                                            count,
                                            kind,
-                                           if normalized { 1 } else { 0 },
-                                           if as_int { 1 } else { 0 });
+                                           normalized,
+                                           as_int);
         }
 
         self
@@ -566,7 +567,7 @@ impl Bgfx {
     /// Clears the debug text overlay.
     #[inline]
     pub fn dbg_text_clear(&self, attr: Option<u8>, small: Option<bool>) {
-        let small = if small.unwrap_or(false) { 1_u8 } else { 0_u8 };
+        let small = small.unwrap_or(false);
         let attr = attr.unwrap_or(0);
 
         unsafe { bgfx_sys::bgfx_dbg_text_clear(attr, small) }
@@ -586,7 +587,7 @@ impl Bgfx {
                                           y,
                                           width,
                                           height,
-                                          data.as_ptr() as *const libc::c_void,
+                                          data.as_ptr() as *const ::std::os::raw::c_void,
                                           pitch)
         }
     }
@@ -601,13 +602,19 @@ impl Bgfx {
     /// Finish the frame, syncing up with the render thread. Returns an incrementing frame counter.
     #[inline]
     pub fn frame(&self) -> u32 {
-        unsafe { bgfx_sys::bgfx_frame() }
+        unsafe { bgfx_sys::bgfx_frame(false) }
+    }
+
+    /// Finish the frame, syncing up with the render thread. Returns an incrementing frame counter.
+    #[inline]
+    pub fn frame_capture(&self) -> u32 {
+        unsafe { bgfx_sys::bgfx_frame(true) }
     }
 
     /// Gets the type of the renderer in use.
     #[inline]
     pub fn get_renderer_type(&self) -> RendererType {
-        unsafe { RendererType::from_u32(bgfx_sys::bgfx_get_renderer_type()).unwrap() }
+        unsafe { RendererType::from_i32(bgfx_sys::bgfx_get_renderer_type()).unwrap() }
     }
 
     /// Resets the graphics device to the given size, with the given flags.
@@ -640,7 +647,7 @@ impl Bgfx {
     #[inline]
     pub fn set_transform(&self, mtx: &[f32; 16]) {
         unsafe {
-            bgfx_sys::bgfx_set_transform(mtx.as_ptr() as *const libc::c_void, 1);
+            bgfx_sys::bgfx_set_transform(mtx.as_ptr() as *const ::std::os::raw::c_void, 1);
         }
     }
 
@@ -668,15 +675,15 @@ impl Bgfx {
     pub fn set_view_transform(&self, id: u8, view: &[f32; 16], proj: &[f32; 16]) {
         unsafe {
             bgfx_sys::bgfx_set_view_transform(id,
-                                              view.as_ptr() as *const libc::c_void,
-                                              proj.as_ptr() as *const libc::c_void)
+                                              view.as_ptr() as *const ::std::os::raw::c_void,
+                                              proj.as_ptr() as *const ::std::os::raw::c_void)
         }
     }
 
     /// Submit a primitive for rendering. Returns the number of draw calls used.
     #[inline]
     pub fn submit(&self, view: u8, program: &Program) -> u32 {
-        unsafe { bgfx_sys::bgfx_submit(view, program.handle, 0) }
+        unsafe { bgfx_sys::bgfx_submit(view, program.handle, 0, false) }
     }
 
     /// Touches a view. ( ͡° ͜ʖ ͡°)
@@ -703,7 +710,7 @@ impl Drop for Bgfx {
 /// This should be called repeatedly on the render thread.
 #[inline]
 pub fn render_frame() -> RenderFrame {
-    unsafe { RenderFrame::from_u32(bgfx_sys::bgfx_render_frame()).unwrap() }
+    unsafe { RenderFrame::from_i32(bgfx_sys::bgfx_render_frame()).unwrap() }
 }
 
 /// Platform data initializer.
@@ -723,7 +730,7 @@ pub fn render_frame() -> RenderFrame {
 ///     .expect("Could not set platform data");
 /// ```
 pub struct PlatformData {
-    data: bgfx_sys::Struct_bgfx_platform_data,
+    data: bgfx_sys::bgfx_platform_data,
 }
 
 impl PlatformData {
@@ -732,12 +739,13 @@ impl PlatformData {
     #[inline]
     pub fn new() -> PlatformData {
         PlatformData {
-            data: bgfx_sys::Struct_bgfx_platform_data {
+            data: bgfx_sys::bgfx_platform_data {
                 ndt: ptr::null_mut(),
                 nwh: ptr::null_mut(),
                 context: ptr::null_mut(),
                 backBuffer: ptr::null_mut(),
                 backBufferDS: ptr::null_mut(),
+                session: ptr::null_mut(),
             },
         }
     }
@@ -758,21 +766,21 @@ impl PlatformData {
 
     /// Sets the GL context to use.
     #[inline]
-    pub fn context(&mut self, context: *mut libc::c_void) -> &mut Self {
+    pub fn context(&mut self, context: *mut ::std::os::raw::c_void) -> &mut Self {
         self.data.context = context;
         self
     }
 
     /// Sets the X11 display to use on unix systems.
     #[inline]
-    pub fn display(&mut self, display: *mut libc::c_void) -> &mut Self {
+    pub fn display(&mut self, display: *mut ::std::os::raw::c_void) -> &mut Self {
         self.data.ndt = display;
         self
     }
 
     /// Sets the handle to the window to use.
     #[inline]
-    pub fn window(&mut self, window: *mut libc::c_void) -> &mut Self {
+    pub fn window(&mut self, window: *mut ::std::os::raw::c_void) -> &mut Self {
         self.data.nwh = window;
         self
     }
@@ -799,6 +807,6 @@ pub fn init(renderer: RendererType,
                                           ptr::null_mut(),
                                           ptr::null_mut());
 
-        if success != 0 { Ok(Bgfx::new()) } else { Err(BgfxError::InitFailed) }
+        if success { Ok(Bgfx::new()) } else { Err(BgfxError::InitFailed) }
     }
 }
