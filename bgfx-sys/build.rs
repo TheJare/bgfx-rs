@@ -202,6 +202,18 @@ fn build_gmake(bitness: u32, profile: &str, platform: &str) {
         panic!("Failed to build bgfx.");
     }
 
+    // Generate tools
+    let status = Command::new("make")
+        .arg("-C")
+        .arg("bgfx")
+        .arg("tools")
+        .status()
+        .expect("Failed to generate tools");
+
+    if status.code().unwrap() != 0 {
+        panic!("Failed to generate tools.");
+    }
+
     // Output linker config
     let mut path = PathBuf::from(env::current_dir().unwrap());
     path.push("bgfx");
