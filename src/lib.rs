@@ -296,7 +296,7 @@ impl<'b> Memory<'b> {
     /// **IMPORTANT:** If this buffer is never passed into a bgfx call, the memory will never be
     /// freed, and will leak.
     #[inline]
-    pub fn copy<'d, T>(_bgfx: &'b Bgfx, data: &'d [T]) -> Memory<'b> {
+    pub fn copy<T>(_bgfx: &Bgfx, data: &[T]) -> Memory<'b> {
         unsafe {
             let handle = bgfx_sys::bgfx_copy(data.as_ptr() as *const ::std::os::raw::c_void,
                                              mem::size_of_val(data) as u32);
@@ -311,7 +311,7 @@ impl<'b> Memory<'b> {
     /// as it's the only way we can guarantee that the memory will still be valid until bgfx has
     /// finished using it.*
     #[inline]
-    pub fn reference<T>(_bgfx: &'b Bgfx, data: &'b [T]) -> Memory<'b> {
+    pub fn reference<T>(_bgfx: &Bgfx, data: &'b [T]) -> Memory<'b> {
         // TODO: The lifetime setup probably isn't 100% complete. Need to figure out how we can
         // guarantee that `data` will outlast `_bgfx`.
         unsafe {
