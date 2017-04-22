@@ -252,6 +252,18 @@ pub enum AttribType {
     Float,
 }
 
+/// Uniform types.
+#[repr(u32)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+pub enum UniformType {
+
+    Int1 = bgfx_sys::BGFX_UNIFORM_TYPE_INT1 as u32,
+    End = bgfx_sys::BGFX_UNIFORM_TYPE_END as u32,
+    Vec4 = bgfx_sys::BGFX_UNIFORM_TYPE_VEC4 as u32,
+    Mat3 = bgfx_sys::BGFX_UNIFORM_TYPE_MAT3 as u32,
+    Mat4 = bgfx_sys::BGFX_UNIFORM_TYPE_MAT4 as u32,
+}
+
 /// bgfx error.
 #[derive(Debug)]
 pub enum BgfxError {
@@ -546,6 +558,91 @@ impl VertexDeclBuilder {
 
 }
 
+
+/// Texture.
+
+pub type TextureInfo = bgfx_sys::bgfx_texture_info_t;
+
+pub struct TextureHandle<'m> {
+    handle: bgfx_sys::bgfx_texture_handle_t,
+    pub info: TextureInfo,
+    _phantom: PhantomData<&'m Bgfx>,
+}
+
+impl<'m> TextureHandle<'m> {
+
+    /// Creates a new texture from bgfx-managed memory.
+    #[inline]
+    pub fn new<'v>(buf: Memory<'m>,
+                   flags: u32,
+                   skip: u8)
+                   -> Self {
+        unsafe {
+            let mut info = bgfx_sys::bgfx_texture_info_t {
+                format: 0,
+                storageSize: 0,
+                width: 0,
+                height: 0,
+                depth: 0,
+                numLayers: 0,
+                numMips: 0,
+                bitsPerPixel: 0,
+                cubeMap: false,
+            };
+            let handle = bgfx_sys::bgfx_create_texture(buf.handle,
+                                                       flags,
+                                                       skip,
+                                                       &mut info/*std::ptr::null_mut()*/);
+            Self { handle: handle, info: info, _phantom: PhantomData }
+        }
+    }
+
+}
+
+impl<'m> Drop for TextureHandle<'m> {
+
+    #[inline]
+    fn drop(&mut self) {
+        unsafe { bgfx_sys::bgfx_destroy_texture(self.handle) }
+    }
+
+}
+
+/// Uniform.
+pub struct UniformHandle<'m> {
+    handle: bgfx_sys::bgfx_uniform_handle_t,
+    _phantom: PhantomData<&'m Bgfx>,
+}
+
+impl<'m> UniformHandle<'m> {
+
+    /// Creates a new uniform from bgfx-managed memory.
+    #[inline]
+    pub fn new<'v>(name: &str,
+                   _type: UniformType,
+                   num: u16)
+                   -> Self {
+        unsafe {
+            let s = std::ffi::CString::new(name).unwrap();
+            let handle = bgfx_sys::bgfx_create_uniform(s.as_ptr(),
+                                                       _type as bgfx_sys::bgfx_uniform_type_t,
+                                                       num);
+            Self { handle: handle, _phantom: PhantomData }
+        }
+    }
+
+}
+
+impl<'m> Drop for UniformHandle<'m> {
+
+    #[inline]
+    fn drop(&mut self) {
+        unsafe { bgfx_sys::bgfx_destroy_uniform(self.handle) }
+    }
+
+}
+
+
 /// Acts as the library wrapper for bgfx. Any calls intended to be run on the main thread are
 /// exposed as functions on this object.
 ///
@@ -656,6 +753,13 @@ impl Bgfx {
     pub fn set_vertex_buffer(&self, vbh: &VertexBuffer) {
         // TODO: How to solve lifetimes...
         unsafe { bgfx_sys::bgfx_set_vertex_buffer(vbh.handle, 0, std::u32::MAX) }
+    }
+
+    /// Sets a texture to a sampler.
+    #[inline]
+    pub fn set_texture(&self, stage: u8, uh: &UniformHandle, th: &TextureHandle) {
+        // TODO: How to solve lifetimes...
+        unsafe { bgfx_sys::bgfx_set_texture(stage, uh.handle, th.handle, u32::max_value()) }
     }
 
     /// Sets the options to use when clearing the given view.
