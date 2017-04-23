@@ -8,6 +8,9 @@
 
 extern crate libc;
 
+use std::fmt;
+
+
 pub type size_t   = ::libc::size_t;
 pub type int32_t  = i32;
 pub type uint8_t  = u8;
@@ -22,6 +25,52 @@ pub const BGFX_PCI_ID_SOFTWARE_RASTERIZER:  u16 = 0x0001;
 pub const BGFX_PCI_ID_AMD:                  u16 = 0x1002;
 pub const BGFX_PCI_ID_INTEL:                u16 = 0x8086;
 pub const BGFX_PCI_ID_NVIDIA:               u16 = 0x10de;
+
+/// Bgfx Caps
+
+pub const BGFX_CAPS_ALPHA_TO_COVERAGE:      u64 = 0x0000000000000001;
+pub const BGFX_CAPS_BLEND_INDEPENDENT:      u64 = 0x0000000000000002;
+pub const BGFX_CAPS_COMPUTE:                u64 = 0x0000000000000004;
+pub const BGFX_CAPS_CONSERVATIVE_RASTER:    u64 = 0x0000000000000008;
+pub const BGFX_CAPS_DRAW_INDIRECT:          u64 = 0x0000000000000010;
+pub const BGFX_CAPS_FRAGMENT_DEPTH:         u64 = 0x0000000000000020;
+pub const BGFX_CAPS_FRAGMENT_ORDERING:      u64 = 0x0000000000000040;
+pub const BGFX_CAPS_GRAPHICS_DEBUGGER:      u64 = 0x0000000000000080;
+pub const BGFX_CAPS_HIDPI:                  u64 = 0x0000000000000100;
+pub const BGFX_CAPS_HMD:                    u64 = 0x0000000000000200;
+pub const BGFX_CAPS_INDEX32:                u64 = 0x0000000000000400;
+pub const BGFX_CAPS_INSTANCING:             u64 = 0x0000000000000800;
+pub const BGFX_CAPS_OCCLUSION_QUERY:        u64 = 0x0000000000001000;
+pub const BGFX_CAPS_RENDERER_MULTITHREADED: u64 = 0x0000000000002000;
+pub const BGFX_CAPS_SWAP_CHAIN:             u64 = 0x0000000000004000;
+pub const BGFX_CAPS_TEXTURE_2D_ARRAY:       u64 = 0x0000000000008000;
+pub const BGFX_CAPS_TEXTURE_3D:             u64 = 0x0000000000010000;
+pub const BGFX_CAPS_TEXTURE_BLIT:           u64 = 0x0000000000020000;
+pub const BGFX_CAPS_TEXTURE_COMPARE_ALL:    u64 = 0x00000000000c0000;
+pub const BGFX_CAPS_TEXTURE_COMPARE_LEQUAL: u64 = 0x0000000000080000;
+pub const BGFX_CAPS_TEXTURE_CUBE_ARRAY:     u64 = 0x0000000000100000;
+pub const BGFX_CAPS_TEXTURE_READ_BACK:      u64 = 0x0000000000200000;
+pub const BGFX_CAPS_VERTEX_ATTRIB_HALF:     u64 = 0x0000000000400000;
+pub const BGFX_CAPS_VERTEX_ATTRIB_UINT10:   u64 = 0x0000000000800000;
+
+/// Texture Caps
+
+pub const BGFX_CAPS_FORMAT_TEXTURE_NONE:             u16 = 0x0000;
+pub const BGFX_CAPS_FORMAT_TEXTURE_2D:               u16 = 0x0001;
+pub const BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB:          u16 = 0x0002;
+pub const BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED:      u16 = 0x0004;
+pub const BGFX_CAPS_FORMAT_TEXTURE_3D:               u16 = 0x0008;
+pub const BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB:          u16 = 0x0010;
+pub const BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED:      u16 = 0x0020;
+pub const BGFX_CAPS_FORMAT_TEXTURE_CUBE:             u16 = 0x0040;
+pub const BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB:        u16 = 0x0080;
+pub const BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED:    u16 = 0x0100;
+pub const BGFX_CAPS_FORMAT_TEXTURE_VERTEX:           u16 = 0x0200;
+pub const BGFX_CAPS_FORMAT_TEXTURE_IMAGE:            u16 = 0x0400;
+pub const BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER:      u16 = 0x0800;
+pub const BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA: u16 = 0x1000;
+pub const BGFX_CAPS_FORMAT_TEXTURE_MSAA:             u16 = 0x2000;
+pub const BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN:      u16 = 0x4000;
 
 // Clear flags
 
@@ -87,6 +136,8 @@ pub const BGFX_RESET_FLUSH_AFTER_RENDER:    u32 = 0x00002000;
 pub const BGFX_RESET_FLIP_AFTER_RENDER:     u32 = 0x00004000;
 pub const BGFX_RESET_SRGB_BACKBUFFER:       u32 = 0x00008000;
 pub const BGFX_RESET_HIDPI:                 u32 = 0x00010000;
+pub const BGFX_RESET_DEPTH_CLAMP:           u32 = 0x00020000;
+pub const BGFX_RESET_SUSPEND:               u32 = 0x00040000;
 
 // Buffer flags
 
@@ -116,6 +167,94 @@ pub const BGFX_BUFFER_COMPUTE_READ_WRITE:   u16 =
         BGFX_BUFFER_COMPUTE_READ |
         BGFX_BUFFER_COMPUTE_WRITE
     );
+
+// Texture flags
+
+pub const BGFX_TEXTURE_NONE:                u32 = 0x00000000;
+pub const BGFX_TEXTURE_U_MIRROR:            u32 = 0x00000001;
+pub const BGFX_TEXTURE_U_CLAMP:             u32 = 0x00000002;
+pub const BGFX_TEXTURE_U_BORDER:            u32 = 0x00000003;
+pub const BGFX_TEXTURE_U_MASK:              u32 = 0x00000003;
+pub const BGFX_TEXTURE_V_MIRROR:            u32 = 0x00000004;
+pub const BGFX_TEXTURE_V_CLAMP:             u32 = 0x00000008;
+pub const BGFX_TEXTURE_V_BORDER:            u32 = 0x0000000c;
+pub const BGFX_TEXTURE_V_MASK:              u32 = 0x0000000c;
+pub const BGFX_TEXTURE_W_MIRROR:            u32 = 0x00000010;
+pub const BGFX_TEXTURE_W_CLAMP:             u32 = 0x00000020;
+pub const BGFX_TEXTURE_W_BORDER:            u32 = 0x00000030;
+pub const BGFX_TEXTURE_W_MASK:              u32 = 0x00000030;
+pub const BGFX_TEXTURE_MIN_POINT:           u32 = 0x00000040;
+pub const BGFX_TEXTURE_MIN_ANISOTROPIC:     u32 = 0x00000080;
+pub const BGFX_TEXTURE_MIN_MASK:            u32 = 0x000000c0;
+pub const BGFX_TEXTURE_MAG_POINT:           u32 = 0x00000100;
+pub const BGFX_TEXTURE_MAG_ANISOTROPIC:     u32 = 0x00000200;
+pub const BGFX_TEXTURE_MAG_MASK:            u32 = 0x00000300;
+pub const BGFX_TEXTURE_MIP_POINT:           u32 = 0x00000400;
+pub const BGFX_TEXTURE_MIP_MASK:            u32 = 0x00000400;
+pub const BGFX_TEXTURE_MSAA_SAMPLE:         u32 = 0x00000800;
+pub const BGFX_TEXTURE_RT:                  u32 = 0x00001000;
+pub const BGFX_TEXTURE_RT_MSAA_X2:          u32 = 0x00002000;
+pub const BGFX_TEXTURE_RT_MSAA_X4:          u32 = 0x00003000;
+pub const BGFX_TEXTURE_RT_MSAA_X8:          u32 = 0x00004000;
+pub const BGFX_TEXTURE_RT_MSAA_X16:         u32 = 0x00005000;
+pub const BGFX_TEXTURE_RT_MSAA_MASK:        u32 = 0x00007000;
+pub const BGFX_TEXTURE_RT_WRITE_ONLY:       u32 = 0x00008000;
+pub const BGFX_TEXTURE_RT_MASK:             u32 = 0x0000f000;
+pub const BGFX_TEXTURE_COMPARE_LESS:        u32 = 0x00010000;
+pub const BGFX_TEXTURE_COMPARE_LEQUAL:      u32 = 0x00020000;
+pub const BGFX_TEXTURE_COMPARE_EQUAL:       u32 = 0x00030000;
+pub const BGFX_TEXTURE_COMPARE_GEQUAL:      u32 = 0x00040000;
+pub const BGFX_TEXTURE_COMPARE_GREATER:     u32 = 0x00050000;
+pub const BGFX_TEXTURE_COMPARE_NOTEQUAL:    u32 = 0x00060000;
+pub const BGFX_TEXTURE_COMPARE_NEVER:       u32 = 0x00070000;
+pub const BGFX_TEXTURE_COMPARE_ALWAYS:      u32 = 0x00080000;
+pub const BGFX_TEXTURE_COMPARE_MASK:        u32 = 0x000f0000;
+pub const BGFX_TEXTURE_COMPUTE_WRITE:       u32 = 0x00100000;
+pub const BGFX_TEXTURE_SRGB:                u32 = 0x00200000;
+pub const BGFX_TEXTURE_BLIT_DST:            u32 = 0x00400000;
+pub const BGFX_TEXTURE_READ_BACK:           u32 = 0x00800000;
+pub const BGFX_TEXTURE_BORDER_COLOR_MASK:   u32 = 0x0f000000;
+pub const BGFX_TEXTURE_RESERVED_MASK:       u32 = 0xf0000000;
+
+#[macro_export]
+macro_rules! BGFX_TEXTURE_BORDER_COLOR {
+    ($aref:expr) => ((($aref as u32) << bgfx_sys::BGFX_TEXTURE_BORDER_COLOR_SHIFT) & bgfx_sys::BGFX_TEXTURE_BORDER_COLOR_MASK)
+}
+
+pub const BGFX_TEXTURE_SAMPLER_BITS_MASK: u32 =
+    (
+        BGFX_TEXTURE_U_MASK |
+        BGFX_TEXTURE_V_MASK |
+        BGFX_TEXTURE_W_MASK |
+        BGFX_TEXTURE_MIN_MASK |
+        BGFX_TEXTURE_MAG_MASK |
+        BGFX_TEXTURE_MIP_MASK |
+        BGFX_TEXTURE_COMPARE_MASK
+    );
+
+///
+pub const BGFX_VIEW_NONE:   u8 = 0x00;
+pub const BGFX_VIEW_STEREO: u8 = 0x01;
+
+///
+pub const BGFX_SUBMIT_EYE_LEFT:       u8 = 0x01;
+pub const BGFX_SUBMIT_EYE_RIGHT:      u8 = 0x02;
+pub const BGFX_SUBMIT_EYE_MASK:       u8 = 0x03;
+pub const BGFX_SUBMIT_EYE_FIRST:      u8 = BGFX_SUBMIT_EYE_LEFT;
+pub const BGFX_SUBMIT_RESERVED_MASK:  u8 = 0x80;
+
+///
+pub const BGFX_HMD_NONE:              u8 = 0x00;
+pub const BGFX_HMD_DEVICE_RESOLUTION: u8 = 0x01;
+pub const BGFX_HMD_RENDERING:         u8 = 0x02;
+
+///
+pub const BGFX_CUBE_MAP_POSITIVE_X: u8 = 0x00;
+pub const BGFX_CUBE_MAP_NEGATIVE_X: u8 = 0x01;
+pub const BGFX_CUBE_MAP_POSITIVE_Y: u8 = 0x02;
+pub const BGFX_CUBE_MAP_NEGATIVE_Y: u8 = 0x03;
+pub const BGFX_CUBE_MAP_POSITIVE_Z: u8 = 0x04;
+pub const BGFX_CUBE_MAP_NEGATIVE_Z: u8 = 0x05;
 
 // State flags
 
@@ -261,3 +400,21 @@ macro_rules! BGFX_STATE_BLEND_FUNC_RT_2E {
 macro_rules! BGFX_STATE_BLEND_FUNC_RT_3E {
     ($src:expr, $dst:expr, $equation:expr) => (BGFX_STATE_BLEND_FUNC_RT_xE!($src, $dst, $equation) << 22)
 }
+
+// ---------------
+
+impl fmt::Debug for bgfx_caps {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Caps {{ rendererType: {}, supported: 0x{:x}, vendorId: 0x{:x}, deviceId: {}, homogeneousDepth: {}, originBottomLeft: {}, numGPUs: {}, limits: {:?}, formats: [ {}] }}",
+        self.rendererType,
+        self.supported,
+        self.vendorId,
+        self.deviceId,
+        self.homogeneousDepth,
+        self.originBottomLeft,
+        self.numGPUs,
+        self.limits,
+        self.formats.iter().fold(String::new(), |acc, &v| { format!("{}0x{:x}, ", acc, v)}))
+    }
+}
+

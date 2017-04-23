@@ -574,7 +574,7 @@ impl<'m> TextureHandle<'m> {
     /// Creates a new texture from bgfx-managed memory.
     #[inline]
     pub fn new<'v>(buf: Memory<'m>,
-                   flags: u32,
+                   flags: TextureFlags,
                    skip: u8)
                    -> Self {
         unsafe {
@@ -590,7 +590,7 @@ impl<'m> TextureHandle<'m> {
                 cubeMap: false,
             };
             let handle = bgfx_sys::bgfx_create_texture(buf.handle,
-                                                       flags,
+                                                       flags.bits(),
                                                        skip,
                                                        &mut info/*std::ptr::null_mut()*/);
             Self { handle: handle, info: info, _phantom: PhantomData }
@@ -642,6 +642,7 @@ impl<'m> Drop for UniformHandle<'m> {
 
 }
 
+pub type Caps = bgfx_sys::bgfx_caps;
 
 /// Acts as the library wrapper for bgfx. Any calls intended to be run on the main thread are
 /// exposed as functions on this object.
@@ -659,6 +660,11 @@ impl Bgfx {
     #[inline]
     fn new() -> Bgfx {
         Bgfx { _dummy: 0 }
+    }
+
+    /// Gets the caps Bgfx is supporting
+    pub fn caps(&self) -> &'static Caps {
+        unsafe { &*bgfx_sys::bgfx_get_caps() }
     }
 
     /// Clears the debug text overlay.
