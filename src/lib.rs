@@ -68,26 +68,35 @@ use std::ffi;
 use std::marker::PhantomData;
 use std::mem;
 use std::ptr;
+use std::fmt;
 
 pub mod flags;
 
 pub use flags::*;
 
 
-/// Autoselect adapter.
-pub const PCI_ID_NONE: u16 = bgfx_sys::BGFX_PCI_ID_NONE;
+#[repr(u16)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+pub enum VendorId {
+    /// Autoselect adapter.
+    None = bgfx_sys::BGFX_PCI_ID_NONE,
 
-/// Software rasterizer.
-pub const PCI_ID_SOFTWARE_RASTERIZER: u16 = bgfx_sys::BGFX_PCI_ID_SOFTWARE_RASTERIZER;
+    /// Software rasterizer.
+    SoftwareRasterizer = bgfx_sys::BGFX_PCI_ID_SOFTWARE_RASTERIZER,
 
-/// AMD adapter.
-pub const PCI_ID_AMD: u16 = bgfx_sys::BGFX_PCI_ID_AMD;
+    /// AMD adapter.
+    AMD = bgfx_sys::BGFX_PCI_ID_AMD,
 
-/// Intel adapter.
-pub const PCI_ID_INTEL: u16 = bgfx_sys::BGFX_PCI_ID_INTEL;
+    /// Intel adapter.
+    Intel = bgfx_sys::BGFX_PCI_ID_INTEL,
 
-/// nVidia adapter.
-pub const PCI_ID_NVIDIA: u16 = bgfx_sys::BGFX_PCI_ID_NVIDIA;
+    /// nVidia adapter.
+    nVidia = bgfx_sys::BGFX_PCI_ID_NVIDIA,
+}
+
+impl Default for VendorId {
+    fn default() -> Self { VendorId::None }
+}
 
 /// Renderer backend type.
 #[repr(i32)]
@@ -121,10 +130,113 @@ pub enum RendererType {
     Default = bgfx_sys::BGFX_RENDERER_TYPE_COUNT,
 }
 
+impl Default for RendererType {
+    fn default() -> Self { RendererType::Default }
+}
+
 impl RendererType {
 
     fn from_i32(n: i32) -> Option<RendererType> {
         if n <= bgfx_sys::BGFX_RENDERER_TYPE_COUNT {
+            Some(unsafe { mem::transmute(n) })
+        } else {
+            None
+        }
+    }
+
+}
+
+/// Texture formats.
+#[repr(i32)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+pub enum TextureFormat {
+    BC1 = bgfx_sys::BGFX_TEXTURE_FORMAT_BC1,
+    BC2 = bgfx_sys::BGFX_TEXTURE_FORMAT_BC2,
+    BC3 = bgfx_sys::BGFX_TEXTURE_FORMAT_BC3,
+    BC4 = bgfx_sys::BGFX_TEXTURE_FORMAT_BC4,
+    BC5 = bgfx_sys::BGFX_TEXTURE_FORMAT_BC5,
+    BC6H = bgfx_sys::BGFX_TEXTURE_FORMAT_BC6H,
+    BC7 = bgfx_sys::BGFX_TEXTURE_FORMAT_BC7,
+    ETC1 = bgfx_sys::BGFX_TEXTURE_FORMAT_ETC1,
+    ETC2 = bgfx_sys::BGFX_TEXTURE_FORMAT_ETC2,
+    ETC2A = bgfx_sys::BGFX_TEXTURE_FORMAT_ETC2A,
+    ETC2A1 = bgfx_sys::BGFX_TEXTURE_FORMAT_ETC2A1,
+    PTC12 = bgfx_sys::BGFX_TEXTURE_FORMAT_PTC12,
+    PTC14 = bgfx_sys::BGFX_TEXTURE_FORMAT_PTC14,
+    PTC12A = bgfx_sys::BGFX_TEXTURE_FORMAT_PTC12A,
+    PTC14A = bgfx_sys::BGFX_TEXTURE_FORMAT_PTC14A,
+    PTC22 = bgfx_sys::BGFX_TEXTURE_FORMAT_PTC22,
+    PTC24 = bgfx_sys::BGFX_TEXTURE_FORMAT_PTC24,
+    Unknown = bgfx_sys::BGFX_TEXTURE_FORMAT_UNKNOWN,
+    R1 = bgfx_sys::BGFX_TEXTURE_FORMAT_R1,
+    A8 = bgfx_sys::BGFX_TEXTURE_FORMAT_A8,
+    R8 = bgfx_sys::BGFX_TEXTURE_FORMAT_R8,
+    R8I = bgfx_sys::BGFX_TEXTURE_FORMAT_R8I,
+    R8U = bgfx_sys::BGFX_TEXTURE_FORMAT_R8U,
+    R8S = bgfx_sys::BGFX_TEXTURE_FORMAT_R8S,
+    R16 = bgfx_sys::BGFX_TEXTURE_FORMAT_R16,
+    R16I = bgfx_sys::BGFX_TEXTURE_FORMAT_R16I,
+    R16U = bgfx_sys::BGFX_TEXTURE_FORMAT_R16U,
+    R16F = bgfx_sys::BGFX_TEXTURE_FORMAT_R16F,
+    R16S = bgfx_sys::BGFX_TEXTURE_FORMAT_R16S,
+    R32I = bgfx_sys::BGFX_TEXTURE_FORMAT_R32I,
+    R32U = bgfx_sys::BGFX_TEXTURE_FORMAT_R32U,
+    R32F = bgfx_sys::BGFX_TEXTURE_FORMAT_R32F,
+    RG8 = bgfx_sys::BGFX_TEXTURE_FORMAT_RG8,
+    RG8I = bgfx_sys::BGFX_TEXTURE_FORMAT_RG8I,
+    RG8U = bgfx_sys::BGFX_TEXTURE_FORMAT_RG8U,
+    RG8S = bgfx_sys::BGFX_TEXTURE_FORMAT_RG8S,
+    RG16 = bgfx_sys::BGFX_TEXTURE_FORMAT_RG16,
+    RG16I = bgfx_sys::BGFX_TEXTURE_FORMAT_RG16I,
+    RG16U = bgfx_sys::BGFX_TEXTURE_FORMAT_RG16U,
+    RG16F = bgfx_sys::BGFX_TEXTURE_FORMAT_RG16F,
+    RG16S = bgfx_sys::BGFX_TEXTURE_FORMAT_RG16S,
+    RG32I = bgfx_sys::BGFX_TEXTURE_FORMAT_RG32I,
+    RG32U = bgfx_sys::BGFX_TEXTURE_FORMAT_RG32U,
+    RG32F = bgfx_sys::BGFX_TEXTURE_FORMAT_RG32F,
+    RGB8 = bgfx_sys::BGFX_TEXTURE_FORMAT_RGB8,
+    RGB8I = bgfx_sys::BGFX_TEXTURE_FORMAT_RGB8I,
+    RGB8U = bgfx_sys::BGFX_TEXTURE_FORMAT_RGB8U,
+    RGB8S = bgfx_sys::BGFX_TEXTURE_FORMAT_RGB8S,
+    RGB9E5F = bgfx_sys::BGFX_TEXTURE_FORMAT_RGB9E5F,
+    BGRA8 = bgfx_sys::BGFX_TEXTURE_FORMAT_BGRA8,
+    RGBA8 = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA8,
+    RGBA8I = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA8I,
+    RGBA8U = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA8U,
+    RGBA8S = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA8S,
+    RGBA16 = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA16,
+    RGBA16I = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA16I,
+    RGBA16U = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA16U,
+    RGBA16F = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA16F,
+    RGBA16S = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA16S,
+    RGBA32I = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA32I,
+    RGBA32U = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA32U,
+    RGBA32F = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA32F,
+    R5G6B5 = bgfx_sys::BGFX_TEXTURE_FORMAT_R5G6B5,
+    RGBA4 = bgfx_sys::BGFX_TEXTURE_FORMAT_RGBA4,
+    RGB5A1 = bgfx_sys::BGFX_TEXTURE_FORMAT_RGB5A1,
+    RGB10A2 = bgfx_sys::BGFX_TEXTURE_FORMAT_RGB10A2,
+    R11G11B10F = bgfx_sys::BGFX_TEXTURE_FORMAT_R11G11B10F,
+    UnknownDepth = bgfx_sys::BGFX_TEXTURE_FORMAT_UNKNOWN_DEPTH,
+    D16 = bgfx_sys::BGFX_TEXTURE_FORMAT_D16,
+    D24 = bgfx_sys::BGFX_TEXTURE_FORMAT_D24,
+    D24S8 = bgfx_sys::BGFX_TEXTURE_FORMAT_D24S8,
+    D32 = bgfx_sys::BGFX_TEXTURE_FORMAT_D32,
+    D16F = bgfx_sys::BGFX_TEXTURE_FORMAT_D16F,
+    D24F = bgfx_sys::BGFX_TEXTURE_FORMAT_D24F,
+    D32F = bgfx_sys::BGFX_TEXTURE_FORMAT_D32F,
+    D0S8 = bgfx_sys::BGFX_TEXTURE_FORMAT_D0S8,
+    Count = bgfx_sys::BGFX_TEXTURE_FORMAT_COUNT,
+}
+
+impl Default for TextureFormat {
+    fn default() -> Self { TextureFormat::Unknown }
+}
+
+impl TextureFormat {
+
+    fn from_i32(n: i32) -> Option<TextureFormat> {
+        if n <= bgfx_sys::BGFX_TEXTURE_FORMAT_COUNT {
             Some(unsafe { mem::transmute(n) })
         } else {
             None
@@ -561,7 +673,19 @@ impl VertexDeclBuilder {
 
 /// Texture.
 
-pub type TextureInfo = bgfx_sys::bgfx_texture_info_t;
+#[repr(C)]
+#[derive(Default)]
+pub struct TextureInfo { // = bgfx_sys::bgfx_texture_info_t
+    pub format: TextureFormat,
+    pub storageSize: u32,
+    pub width: u16,
+    pub height: u16,
+    pub depth: u16,
+    pub numLayers: u16,
+    pub numMips: u8,
+    pub bitsPerPixel: u8,
+    pub cubeMap: bool,
+}
 
 pub struct TextureHandle<'m> {
     handle: bgfx_sys::bgfx_texture_handle_t,
@@ -578,21 +702,11 @@ impl<'m> TextureHandle<'m> {
                    skip: u8)
                    -> Self {
         unsafe {
-            let mut info = bgfx_sys::bgfx_texture_info_t {
-                format: 0,
-                storageSize: 0,
-                width: 0,
-                height: 0,
-                depth: 0,
-                numLayers: 0,
-                numMips: 0,
-                bitsPerPixel: 0,
-                cubeMap: false,
-            };
+            let mut info: TextureInfo = Default::default();
             let handle = bgfx_sys::bgfx_create_texture(buf.handle,
                                                        flags.bits(),
                                                        skip,
-                                                       &mut info/*std::ptr::null_mut()*/);
+                                                       std::mem::transmute(&mut info));
             Self { handle: handle, info: info, _phantom: PhantomData }
         }
     }
@@ -642,7 +756,84 @@ impl<'m> Drop for UniformHandle<'m> {
 
 }
 
-pub type Caps = bgfx_sys::bgfx_caps;
+// Caps
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Default)]
+pub struct CapsGpu {
+    vendorId : VendorId,
+    deviceId : u16,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Default)]
+pub struct CapsLimits { // = bgfx_sys::bgfx_caps_limits
+    pub maxDrawCalls: u32,
+    pub maxBlits: u32,
+    pub maxTextureSize: u32,
+    pub maxViews: u32,
+    pub maxFrameBuffers: u32,
+    pub maxFBAttachments: u32,
+    pub maxPrograms: u32,
+    pub maxShaders: u32,
+    pub maxTextures: u32,
+    pub maxTextureSamplers: u32,
+    pub maxVertexDecls: u32,
+    pub maxVertexStreams: u32,
+    pub maxIndexBuffers: u32,
+    pub maxVertexBuffers: u32,
+    pub maxDynamicIndexBuffers: u32,
+    pub maxDynamicVertexBuffers: u32,
+    pub maxUniforms: u32,
+    pub maxOcclusionQueries: u32,
+}
+
+#[repr(C)]
+pub struct Caps { // = bgfx_sys::bgfx_caps;
+    pub rendererType: RendererType,
+    pub supported: u64,
+    pub vendorId: VendorId,
+    pub deviceId: u16,
+    pub homogeneousDepth: bool,
+    pub originBottomLeft: bool,
+    pub numGPUs: u8,
+    pub gpu: [CapsGpu; 4usize],
+    pub limits: CapsLimits,
+    pub formats: [u16; 76usize],
+}
+
+impl std::default::Default for Caps {
+    fn default() -> Self {
+        Self {
+            rendererType: RendererType::Default,
+            supported: 0,
+            vendorId: Default::default(),
+            deviceId: 0,
+            homogeneousDepth: false,
+            originBottomLeft: false,
+            numGPUs: 0,
+            gpu: [Default::default(); 4usize],
+            limits: Default::default(),
+            formats: [0; 76usize],
+        }
+    }
+}
+
+impl fmt::Debug for Caps {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Caps {{ rendererType: {:?}, supported: 0x{:x}, vendorId: {:?}, deviceId: {}, homogeneousDepth: {}, originBottomLeft: {}, numGPUs: {}, limits: {:?}, formats: [ {}] }}",
+        self.rendererType,
+        self.supported,
+        self.vendorId,
+        self.deviceId,
+        self.homogeneousDepth,
+        self.originBottomLeft,
+        self.numGPUs,
+        self.limits,
+        self.formats.iter().fold(String::new(), |acc, &v| { format!("{}0x{:x}, ", acc, v)}))
+    }
+}
+
 
 /// Acts as the library wrapper for bgfx. Any calls intended to be run on the main thread are
 /// exposed as functions on this object.
@@ -663,8 +854,11 @@ impl Bgfx {
     }
 
     /// Gets the caps Bgfx is supporting
-    pub fn caps(&self) -> &'static Caps {
-        unsafe { &*bgfx_sys::bgfx_get_caps() }
+    pub fn caps(&self) -> Caps {
+        let mut caps: Caps = Default::default();
+
+        unsafe { ::std::ptr::copy(std::mem::transmute::<*const bgfx_sys::bgfx_caps_t, *const Caps>(bgfx_sys::bgfx_get_caps()), &mut caps, 1) }
+        caps
     }
 
     /// Clears the debug text overlay.
@@ -903,16 +1097,16 @@ impl PlatformData {
 ///
 /// [`PlatformData`]: struct.PlatformData.html
 pub fn init(renderer: RendererType,
-            vendor_id: Option<u16>,
+            vendor_id: Option<VendorId>,
             device_id: Option<u16>)
             -> Result<Bgfx, BgfxError> {
     let renderer = renderer as bgfx_sys::bgfx_renderer_type_t;
-    let vendor = vendor_id.unwrap_or(PCI_ID_NONE);
+    let vendor = vendor_id.unwrap_or(Default::default());
     let device = device_id.unwrap_or(0);
 
     unsafe {
         let success = bgfx_sys::bgfx_init(renderer,
-                                          vendor,
+                                          vendor as u16,
                                           device,
                                           ptr::null_mut(),
                                           ptr::null_mut());
