@@ -674,7 +674,7 @@ impl VertexDeclBuilder {
 /// Texture.
 
 #[repr(C)]
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct TextureInfo { // = bgfx_sys::bgfx_texture_info_t
     pub format: TextureFormat,
     pub storageSize: u32,
