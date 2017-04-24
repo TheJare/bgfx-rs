@@ -252,6 +252,8 @@ bitflags! {
         const RESET_FLIP_AFTER_RENDER = bgfx_sys::BGFX_RESET_FLIP_AFTER_RENDER,
         const RESET_SRGB_BACKBUFFER = bgfx_sys::BGFX_RESET_SRGB_BACKBUFFER,
         const RESET_HIDPI = bgfx_sys::BGFX_RESET_HIDPI,
+        const RESET_DEPTH_CLAMP = bgfx_sys::BGFX_RESET_DEPTH_CLAMP,
+        const RESET_SUSPEND = bgfx_sys::BGFX_RESET_SUSPEND,
     }
 }
 
@@ -261,3 +263,68 @@ impl Default for ResetFlags {
         RESET_NONE
     }
 }
+
+bitflags! {
+    pub flags TextureFlags: u32 {
+
+        const TEXTURE_NONE = bgfx_sys::BGFX_TEXTURE_NONE,
+        const TEXTURE_U_MIRROR = bgfx_sys::BGFX_TEXTURE_U_MIRROR,
+        const TEXTURE_U_CLAMP = bgfx_sys::BGFX_TEXTURE_U_CLAMP,
+        const TEXTURE_U_BORDER = bgfx_sys::BGFX_TEXTURE_U_BORDER,
+        const TEXTURE_U_MASK = bgfx_sys::BGFX_TEXTURE_U_MASK,
+        const TEXTURE_V_MIRROR = bgfx_sys::BGFX_TEXTURE_V_MIRROR,
+        const TEXTURE_V_CLAMP = bgfx_sys::BGFX_TEXTURE_V_CLAMP,
+        const TEXTURE_V_BORDER = bgfx_sys::BGFX_TEXTURE_V_BORDER,
+        const TEXTURE_V_MASK = bgfx_sys::BGFX_TEXTURE_V_MASK,
+        const TEXTURE_W_MIRROR = bgfx_sys::BGFX_TEXTURE_W_MIRROR,
+        const TEXTURE_W_CLAMP = bgfx_sys::BGFX_TEXTURE_W_CLAMP,
+        const TEXTURE_W_BORDER = bgfx_sys::BGFX_TEXTURE_W_BORDER,
+        const TEXTURE_W_MASK = bgfx_sys::BGFX_TEXTURE_W_MASK,
+        const TEXTURE_MIN_POINT = bgfx_sys::BGFX_TEXTURE_MIN_POINT,
+        const TEXTURE_MIN_ANISOTROPIC = bgfx_sys::BGFX_TEXTURE_MIN_ANISOTROPIC,
+        const TEXTURE_MIN_MASK = bgfx_sys::BGFX_TEXTURE_MIN_MASK,
+        const TEXTURE_MAG_POINT = bgfx_sys::BGFX_TEXTURE_MAG_POINT,
+        const TEXTURE_MAG_ANISOTROPIC = bgfx_sys::BGFX_TEXTURE_MAG_ANISOTROPIC,
+        const TEXTURE_MAG_MASK = bgfx_sys::BGFX_TEXTURE_MAG_MASK,
+        const TEXTURE_MIP_POINT = bgfx_sys::BGFX_TEXTURE_MIP_POINT,
+        const TEXTURE_MIP_MASK = bgfx_sys::BGFX_TEXTURE_MIP_MASK,
+        const TEXTURE_MSAA_SAMPLE = bgfx_sys::BGFX_TEXTURE_MSAA_SAMPLE,
+        const TEXTURE_RT = bgfx_sys::BGFX_TEXTURE_RT,
+        const TEXTURE_RT_MSAA_X2 = bgfx_sys::BGFX_TEXTURE_RT_MSAA_X2,
+        const TEXTURE_RT_MSAA_X4 = bgfx_sys::BGFX_TEXTURE_RT_MSAA_X4,
+        const TEXTURE_RT_MSAA_X8 = bgfx_sys::BGFX_TEXTURE_RT_MSAA_X8,
+        const TEXTURE_RT_MSAA_X16 = bgfx_sys::BGFX_TEXTURE_RT_MSAA_X16,
+        const TEXTURE_RT_MSAA_MASK = bgfx_sys::BGFX_TEXTURE_RT_MSAA_MASK,
+        const TEXTURE_RT_WRITE_ONLY = bgfx_sys::BGFX_TEXTURE_RT_WRITE_ONLY,
+        const TEXTURE_RT_MASK = bgfx_sys::BGFX_TEXTURE_RT_MASK,
+        const TEXTURE_COMPARE_LESS = bgfx_sys::BGFX_TEXTURE_COMPARE_LESS,
+        const TEXTURE_COMPARE_LEQUAL = bgfx_sys::BGFX_TEXTURE_COMPARE_LEQUAL,
+        const TEXTURE_COMPARE_EQUAL = bgfx_sys::BGFX_TEXTURE_COMPARE_EQUAL,
+        const TEXTURE_COMPARE_GEQUAL = bgfx_sys::BGFX_TEXTURE_COMPARE_GEQUAL,
+        const TEXTURE_COMPARE_GREATER = bgfx_sys::BGFX_TEXTURE_COMPARE_GREATER,
+        const TEXTURE_COMPARE_NOTEQUAL = bgfx_sys::BGFX_TEXTURE_COMPARE_NOTEQUAL,
+        const TEXTURE_COMPARE_NEVER = bgfx_sys::BGFX_TEXTURE_COMPARE_NEVER,
+        const TEXTURE_COMPARE_ALWAYS = bgfx_sys::BGFX_TEXTURE_COMPARE_ALWAYS,
+        const TEXTURE_COMPARE_MASK = bgfx_sys::BGFX_TEXTURE_COMPARE_MASK,
+        const TEXTURE_COMPUTE_WRITE = bgfx_sys::BGFX_TEXTURE_COMPUTE_WRITE,
+        const TEXTURE_SRGB = bgfx_sys::BGFX_TEXTURE_SRGB,
+        const TEXTURE_BLIT_DST = bgfx_sys::BGFX_TEXTURE_BLIT_DST,
+        const TEXTURE_READ_BACK = bgfx_sys::BGFX_TEXTURE_READ_BACK,
+        const TEXTURE_BORDER_COLOR_MASK = bgfx_sys::BGFX_TEXTURE_BORDER_COLOR_MASK,
+        const TEXTURE_RESERVED_MASK = bgfx_sys::BGFX_TEXTURE_RESERVED_MASK,
+        const TEXTURE_SAMPLER_BITS_MASK = bgfx_sys::BGFX_TEXTURE_SAMPLER_BITS_MASK,
+    }
+}
+
+#[inline]
+pub fn texture_border_color(color: u32) -> TextureFlags {
+    TextureFlags::from_bits(BGFX_TEXTURE_BORDER_COLOR!(color)).unwrap()
+}
+
+impl Default for TextureFlags {
+    #[inline]
+    fn default() -> Self {
+        TEXTURE_NONE
+    }
+}
+

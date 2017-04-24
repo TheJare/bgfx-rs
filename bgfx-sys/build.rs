@@ -40,6 +40,7 @@ fn build_msvc(bitness: u32) {
     Command::new("bx/tools/bin/windows/genie.exe")
         .current_dir("bgfx")
         .arg("--with-dynamic-runtime")
+        .arg("--with-tools")
         // .arg(format!("--with-windows={}",
         //              env::var("WindowsSDKVersion")
         //                  .unwrap_or("8.1".to_string())
@@ -83,6 +84,55 @@ fn build_msvc(bitness: u32) {
     if status.code().unwrap() != 0 {
         panic!("Failed to build bimg");
     }
+
+    // Build tools
+    let status = Command::new("devenv.exe")
+        .current_dir("bgfx")
+        .arg(format!(".build/projects/vs{}/bgfx.sln", vs_release))
+        .arg("/Build")
+        .arg(format!("Release|x{}", bitness))
+        .status()
+        .expect("Failed to build tools");
+
+    if status.code().unwrap() != 0 {
+        panic!("Failed to build tools");
+    }
+
+    Command::new("cmd")
+        .current_dir("bgfx")
+        .arg("/C")
+        .arg(format!("copy .build\\win{}_vs{}\\bin\\geometrycRelease.exe tools\\bin\\windows\\geometryc.exe", bitness, vs_release))
+        .status().ok()
+        .and_then(|s| s.code())
+        .and_then(|s| if s == 0 {Some(0)} else {None})
+        .expect("Failed to copy geometryc.exe");
+
+    Command::new("cmd")
+        .current_dir("bgfx")
+        .arg("/C")
+        .arg(format!("copy .build\\win{}_vs{}\\bin\\shadercRelease.exe tools\\bin\\windows\\shaderc.exe", bitness, vs_release))
+        .status().ok()
+        .and_then(|s| s.code())
+        .and_then(|s| if s == 0 {Some(0)} else {None})
+        .expect("Failed to copy shaderc.exe");
+
+    Command::new("cmd")
+        .current_dir("bgfx")
+        .arg("/C")
+        .arg(format!("copy .build\\win{}_vs{}\\bin\\texturecRelease.exe tools\\bin\\windows\\texturec.exe", bitness, vs_release))
+        .status().ok()
+        .and_then(|s| s.code())
+        .and_then(|s| if s == 0 {Some(0)} else {None})
+        .expect("Failed to copy texturec.exe");
+
+    Command::new("cmd")
+        .current_dir("bgfx")
+        .arg("/C")
+        .arg(format!("copy .build\\win{}_vs{}\\bin\\texturevRelease.exe tools\\bin\\windows\\texturev.exe", bitness, vs_release))
+        .status().ok()
+        .and_then(|s| s.code())
+        .and_then(|s| if s == 0 {Some(0)} else {None})
+        .expect("Failed to copy texturev.exe");
 
     let mut path = PathBuf::from(env::current_dir().unwrap());
     path.push("bgfx");
@@ -150,6 +200,18 @@ fn build_gmake(bitness: u32, profile: &str, platform: &str) {
 
     if status.code().unwrap() != 0 {
         panic!("Failed to build bgfx.");
+    }
+
+    // Generate tools
+    let status = Command::new("make")
+        .arg("-C")
+        .arg("bgfx")
+        .arg("tools")
+        .status()
+        .expect("Failed to generate tools");
+
+    if status.code().unwrap() != 0 {
+        panic!("Failed to generate tools.");
     }
 
     // Output linker config
