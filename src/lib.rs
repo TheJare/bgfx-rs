@@ -819,21 +819,33 @@ impl std::default::Default for Caps {
     }
 }
 
-impl fmt::Debug for Caps {
+struct FormatsDebugHelper<'a> {
+    data: &'a [u16]
+}
+impl<'a> fmt::Debug for FormatsDebugHelper<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Caps {{ rendererType: {:?}, supported: 0x{:x}, vendorId: {:?}, deviceId: {}, homogeneousDepth: {}, originBottomLeft: {}, numGPUs: {}, limits: {:?}, formats: [ {}] }}",
-        self.rendererType,
-        self.supported,
-        self.vendorId,
-        self.deviceId,
-        self.homogeneousDepth,
-        self.originBottomLeft,
-        self.numGPUs,
-        self.limits,
-        self.formats.iter().fold(String::new(), |acc, &v| { format!("{}0x{:x}, ", acc, v)}))
+        write!(f, "[ {} ]", self.data.iter().enumerate().fold(String::new(), |acc, (i,&v)| {
+            format!("{}{}0x{:x}", acc, if i == 0 {""} else {", "}, v)
+        }))
     }
 }
 
+impl fmt::Debug for Caps {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Caps").
+            field("rendererType", &self.rendererType).
+            field("supported", &self.supported).
+            field("vendorId", &self.vendorId).
+            field("deviceId", &self.deviceId).
+            field("homogeneousDepth", &self.homogeneousDepth).
+            field("originBottomLeft", &self.originBottomLeft).
+            field("numGPUs", &self.numGPUs).
+            field("gpu", &self.gpu).
+            field("limits", &self.limits).
+            field("formats", &FormatsDebugHelper{data:&self.formats}).
+            finish()
+    }
+}
 
 /// Acts as the library wrapper for bgfx. Any calls intended to be run on the main thread are
 /// exposed as functions on this object.
