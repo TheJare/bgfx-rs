@@ -328,3 +328,72 @@ impl Default for TextureFlags {
     }
 }
 
+/// Bgfx Caps
+
+bitflags! {
+    pub flags CapsFlags: u64 {
+
+        const CAPS_NONE = 0,
+        const CAPS_ALPHA_TO_COVERAGE = bgfx_sys::BGFX_CAPS_ALPHA_TO_COVERAGE,
+        const CAPS_BLEND_INDEPENDENT = bgfx_sys::BGFX_CAPS_BLEND_INDEPENDENT,
+        const CAPS_COMPUTE = bgfx_sys::BGFX_CAPS_COMPUTE,
+        const CAPS_CONSERVATIVE_RASTER = bgfx_sys::BGFX_CAPS_CONSERVATIVE_RASTER,
+        const CAPS_DRAW_INDIRECT = bgfx_sys::BGFX_CAPS_DRAW_INDIRECT,
+        const CAPS_FRAGMENT_DEPTH = bgfx_sys::BGFX_CAPS_FRAGMENT_DEPTH,
+        const CAPS_FRAGMENT_ORDERING = bgfx_sys::BGFX_CAPS_FRAGMENT_ORDERING,
+        const CAPS_GRAPHICS_DEBUGGER = bgfx_sys::BGFX_CAPS_GRAPHICS_DEBUGGER,
+        const CAPS_HIDPI = bgfx_sys::BGFX_CAPS_HIDPI,
+        const CAPS_HMD = bgfx_sys::BGFX_CAPS_HMD,
+        const CAPS_INDEX32 = bgfx_sys::BGFX_CAPS_INDEX32,
+        const CAPS_INSTANCING = bgfx_sys::BGFX_CAPS_INSTANCING,
+        const CAPS_OCCLUSION_QUERY = bgfx_sys::BGFX_CAPS_OCCLUSION_QUERY,
+        const CAPS_RENDERER_MULTITHREADED = bgfx_sys::BGFX_CAPS_RENDERER_MULTITHREADED,
+        const CAPS_SWAP_CHAIN = bgfx_sys::BGFX_CAPS_SWAP_CHAIN,
+        const CAPS_TEXTURE_2D_ARRAY = bgfx_sys::BGFX_CAPS_TEXTURE_2D_ARRAY,
+        const CAPS_TEXTURE_3D = bgfx_sys::BGFX_CAPS_TEXTURE_3D,
+        const CAPS_TEXTURE_BLIT = bgfx_sys::BGFX_CAPS_TEXTURE_BLIT,
+        const CAPS_TEXTURE_COMPARE_ALL = bgfx_sys::BGFX_CAPS_TEXTURE_COMPARE_ALL,
+        const CAPS_TEXTURE_COMPARE_LEQUAL = bgfx_sys::BGFX_CAPS_TEXTURE_COMPARE_LEQUAL,
+        const CAPS_TEXTURE_CUBE_ARRAY = bgfx_sys::BGFX_CAPS_TEXTURE_CUBE_ARRAY,
+        const CAPS_TEXTURE_READ_BACK = bgfx_sys::BGFX_CAPS_TEXTURE_READ_BACK,
+        const CAPS_VERTEX_ATTRIB_HALF = bgfx_sys::BGFX_CAPS_VERTEX_ATTRIB_HALF,
+        const CAPS_VERTEX_ATTRIB_UINT10 = bgfx_sys::BGFX_CAPS_VERTEX_ATTRIB_UINT10,
+    }
+}
+
+impl Default for CapsFlags {
+    #[inline]
+    fn default() -> Self {
+        CAPS_NONE
+    }
+}
+
+/// Texture Caps
+
+bitflags! {
+    pub flags TextureCapsFlags: u16 {
+        const CAPS_FORMAT_TEXTURE_NONE = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_NONE,
+        const CAPS_FORMAT_TEXTURE_2D = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_2D,
+        const CAPS_FORMAT_TEXTURE_2D_SRGB = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB,
+        const CAPS_FORMAT_TEXTURE_2D_EMULATED = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED,
+        const CAPS_FORMAT_TEXTURE_3D = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_3D,
+        const CAPS_FORMAT_TEXTURE_3D_SRGB = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB,
+        const CAPS_FORMAT_TEXTURE_3D_EMULATED = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED,
+        const CAPS_FORMAT_TEXTURE_CUBE = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_CUBE,
+        const CAPS_FORMAT_TEXTURE_CUBE_SRGB = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB,
+        const CAPS_FORMAT_TEXTURE_CUBE_EMULATED = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED,
+        const CAPS_FORMAT_TEXTURE_VERTEX = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_VERTEX,
+        const CAPS_FORMAT_TEXTURE_IMAGE = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_IMAGE,
+        const CAPS_FORMAT_TEXTURE_FRAMEBUFFER = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER,
+        const CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA,
+        const CAPS_FORMAT_TEXTURE_MSAA = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_MSAA,
+        const CAPS_FORMAT_TEXTURE_MIP_AUTOGEN = bgfx_sys::BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN,
+    }
+}
+
+impl Default for TextureCapsFlags {
+    #[inline]
+    fn default() -> Self {
+        CAPS_FORMAT_TEXTURE_NONE
+    }
+}

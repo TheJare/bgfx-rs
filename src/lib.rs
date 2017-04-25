@@ -92,6 +92,9 @@ pub enum VendorId {
 
     /// nVidia adapter.
     nVidia = bgfx_sys::BGFX_PCI_ID_NVIDIA,
+
+    /// Microsoft DirectX Basic Render Driver
+    MSBasicRender = 0x1414u16,
 }
 
 impl Default for VendorId {
@@ -556,6 +559,21 @@ impl<'m> Drop for VertexBuffer<'m> {
 
 }
 
+pub struct InstanceDataBuffer<T: 'static>
+{
+    pub data: &'static mut [T],
+    pidb: *const bgfx_sys::bgfx_instance_data_buffer_t
+}
+
+impl<T> Drop for InstanceDataBuffer<T> {
+
+    #[inline]
+    fn drop(&mut self) {
+        panic!("Allocated instance data buffer MUST be given back to bgfx or leaks will happen");
+    }
+
+}
+
 /// Describes the structure of a vertex.
 pub struct VertexDecl {
     decl: bgfx_sys::bgfx_vertex_decl_t,
@@ -791,7 +809,7 @@ pub struct CapsLimits { // = bgfx_sys::bgfx_caps_limits
 #[repr(C)]
 pub struct Caps { // = bgfx_sys::bgfx_caps;
     pub rendererType: RendererType,
-    pub supported: u64,
+    pub supported: CapsFlags,
     pub vendorId: VendorId,
     pub deviceId: u16,
     pub homogeneousDepth: bool,
@@ -799,14 +817,14 @@ pub struct Caps { // = bgfx_sys::bgfx_caps;
     pub numGPUs: u8,
     pub gpu: [CapsGpu; 4usize],
     pub limits: CapsLimits,
-    pub formats: [u16; 76usize],
+    pub formats: [TextureCapsFlags; 76usize],
 }
 
 impl std::default::Default for Caps {
     fn default() -> Self {
         Self {
             rendererType: RendererType::Default,
-            supported: 0,
+            supported: Default::default(),
             vendorId: Default::default(),
             deviceId: 0,
             homogeneousDepth: false,
@@ -814,18 +832,18 @@ impl std::default::Default for Caps {
             numGPUs: 0,
             gpu: [Default::default(); 4usize],
             limits: Default::default(),
-            formats: [0; 76usize],
+            formats: [Default::default(); 76usize],
         }
     }
 }
 
 struct FormatsDebugHelper<'a> {
-    data: &'a [u16]
+    data: &'a [TextureCapsFlags]
 }
 impl<'a> fmt::Debug for FormatsDebugHelper<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "[ {} ]", self.data.iter().enumerate().fold(String::new(), |acc, (i,&v)| {
-            format!("{}{}0x{:x}", acc, if i == 0 {""} else {", "}, v)
+            format!("{}{}0x{:x}", acc, if i == 0 {""} else {", "}, v.bits())
         }))
     }
 }
@@ -840,7 +858,7 @@ impl fmt::Debug for Caps {
             field("homogeneousDepth", &self.homogeneousDepth).
             field("originBottomLeft", &self.originBottomLeft).
             field("numGPUs", &self.numGPUs).
-            field("gpu", &self.gpu).
+            field("gpu", &self.gpu). // Seems to sometimes contain odd info
             field("limits", &self.limits).
             field("formats", &FormatsDebugHelper{data:&self.formats}).
             finish()
@@ -938,6 +956,23 @@ impl Bgfx {
         unsafe { bgfx_sys::bgfx_set_debug(debug.bits()) }
     }
 
+    pub fn alloc_instance_data_buffer<T>(&self, num: usize) -> Option<InstanceDataBuffer<T>> {
+        let stride = mem::size_of::<T>();
+        unsafe {
+            let pidb: *const bgfx_sys::bgfx_instance_data_buffer_t =
+                bgfx_sys::bgfx_alloc_instance_data_buffer(num as u32, stride as u16);
+            if pidb.is_null() {
+                return None;
+            }
+            let data: *mut T = mem::transmute((*pidb).data);
+            let idb = InstanceDataBuffer::<T> {
+                data: std::slice::from_raw_parts_mut::<T>(data, num),
+                pidb: pidb,
+            };
+            Some(idb)
+        }
+    }
+
     /// Sets the index buffer to use for rendering.
     #[inline]
     pub fn set_index_buffer(&self, ibh: &IndexBuffer) {
@@ -965,6 +1000,14 @@ impl Bgfx {
     pub fn set_vertex_buffer(&self, vbh: &VertexBuffer) {
         // TODO: How to solve lifetimes...
         unsafe { bgfx_sys::bgfx_set_vertex_buffer(vbh.handle, 0, std::u32::MAX) }
+    }
+
+    /// Sets and consumes the allocated instance data buffer
+    pub fn set_instance_data_buffer<T>(&self, idb: InstanceDataBuffer<T>) {
+        unsafe {
+            bgfx_sys::bgfx_set_instance_data_buffer(idb.pidb, std::u32::MAX);
+            mem::forget(idb);
+        }
     }
 
     /// Sets a texture to a sampler.
