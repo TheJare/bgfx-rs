@@ -77,6 +77,7 @@ pub use flags::*;
 
 #[repr(u16)]
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[allow(non_camel_case_types)]
 pub enum VendorId {
     /// Autoselect adapter.
     None = bgfx_sys::BGFX_PCI_ID_NONE,
@@ -236,7 +237,7 @@ impl Default for TextureFormat {
     fn default() -> Self { TextureFormat::Unknown }
 }
 
-impl TextureFormat {
+/*impl TextureFormat {
 
     fn from_i32(n: i32) -> Option<TextureFormat> {
         if n <= bgfx_sys::BGFX_TEXTURE_FORMAT_COUNT {
@@ -247,6 +248,7 @@ impl TextureFormat {
     }
 
 }
+*/
 
 /// `render_frame()` results.
 #[repr(i32)]
@@ -574,6 +576,16 @@ impl<T> Drop for InstanceDataBuffer<T> {
 
 }
 
+pub struct TransientIndexBuffer {
+    pub data: &'static mut [u32],
+    btib: bgfx_sys::bgfx_transient_index_buffer_t,
+}
+
+pub struct TransientVertexBuffer<T: 'static> {
+    pub data: &'static mut [T],
+    btvb: bgfx_sys::bgfx_transient_vertex_buffer_t,
+}
+
 /// Describes the structure of a vertex.
 pub struct VertexDecl {
     decl: bgfx_sys::bgfx_vertex_decl_t,
@@ -693,6 +705,7 @@ impl VertexDeclBuilder {
 
 #[repr(C)]
 #[derive(Default, Debug)]
+#[allow(non_snake_case)]
 pub struct TextureInfo { // = bgfx_sys::bgfx_texture_info_t
     pub format: TextureFormat,
     pub storageSize: u32,
@@ -778,6 +791,7 @@ impl<'m> Drop for UniformHandle<'m> {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
+#[allow(non_snake_case)]
 pub struct CapsGpu {
     vendorId : VendorId,
     deviceId : u16,
@@ -785,6 +799,7 @@ pub struct CapsGpu {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
+#[allow(non_snake_case)]
 pub struct CapsLimits { // = bgfx_sys::bgfx_caps_limits
     pub maxDrawCalls: u32,
     pub maxBlits: u32,
@@ -807,6 +822,7 @@ pub struct CapsLimits { // = bgfx_sys::bgfx_caps_limits
 }
 
 #[repr(C)]
+#[allow(non_snake_case)]
 pub struct Caps { // = bgfx_sys::bgfx_caps;
     pub rendererType: RendererType,
     pub supported: CapsFlags,
@@ -923,7 +939,8 @@ impl Bgfx {
     #[inline]
     pub fn dbg_text_print(&self, x: u16, y: u16, attr: u8, text: &str) {
         let text = ffi::CString::new(text).unwrap();
-        unsafe { bgfx_sys::bgfx_dbg_text_printf(x, y, attr, text.as_ptr()) }
+        let format = ffi::CString::new("%s").unwrap();
+        unsafe { bgfx_sys::bgfx_dbg_text_printf(x, y, attr, format.as_ptr(), text.as_ptr()) }
     }
 
     /// Finish the frame, syncing up with the render thread. Returns an incrementing frame counter.
@@ -956,6 +973,7 @@ impl Bgfx {
         unsafe { bgfx_sys::bgfx_set_debug(debug.bits()) }
     }
 
+    /// Allocate vertex array from the instance data buffer
     pub fn alloc_instance_data_buffer<T>(&self, num: usize) -> Option<InstanceDataBuffer<T>> {
         let stride = mem::size_of::<T>();
         unsafe {
@@ -971,6 +989,78 @@ impl Bgfx {
             };
             Some(idb)
         }
+    }
+
+    pub fn get_avail_transient_index_buffer(&self, num: usize) -> usize {
+        unsafe { bgfx_sys::bgfx_get_avail_transient_index_buffer(num as u32) as usize }
+    }
+
+    pub fn get_avail_transient_vertex_buffer(&self, num: usize, decl: &VertexDecl) -> usize {
+        unsafe { bgfx_sys::bgfx_get_avail_transient_vertex_buffer(num as u32, &decl.decl) as usize }
+    }
+
+    pub fn bgfx_get_avail_instance_data_buffer<T>(&self, num: usize) -> usize{
+        let stride = mem::size_of::<T>();
+        unsafe { bgfx_sys::bgfx_get_avail_instance_data_buffer(num as u32, stride as u16) as usize }
+    }
+
+    pub fn alloc_transient_index_buffer(&self, num: usize) -> Option<TransientIndexBuffer> {
+        unsafe {
+            let mut btib = bgfx_sys::bgfx_transient_index_buffer_t {
+                data: ptr::null_mut(),
+                size: 0,
+                handle: bgfx_sys::bgfx_index_buffer_handle_t { idx: 0 },
+                startIndex: 0,
+            };
+            bgfx_sys::bgfx_alloc_transient_index_buffer(&mut btib, num as u32);
+            if btib.data.is_null() {
+                return None;
+            }
+            let data: *mut u32 = mem::transmute(btib.data);
+            Some(TransientIndexBuffer {
+                data: std::slice::from_raw_parts_mut::<u32>(data, num),
+                btib: btib,
+            })
+        }
+    }
+
+    pub fn alloc_transient_vertex_buffer<T>(&self, num: usize, decl: &VertexDecl) -> Option<TransientVertexBuffer<T>> {
+        let stride = mem::size_of::<T>();
+        unsafe {
+            let mut btvb = bgfx_sys::bgfx_transient_vertex_buffer_t {
+                data: ptr::null_mut(),
+                size: 0,
+                startVertex: 0,
+                stride: stride as u16,
+                handle: bgfx_sys::bgfx_vertex_buffer_handle_t { idx: 0 },
+                decl: bgfx_sys::bgfx_vertex_decl_handle_t { idx: 0 },
+            };
+            bgfx_sys::bgfx_alloc_transient_vertex_buffer(&mut btvb, num as u32, &decl.decl);
+            if btvb.data.is_null() {
+                return None;
+            }
+            let data: *mut T = mem::transmute(btvb.data);
+            Some(TransientVertexBuffer::<T> {
+                data: std::slice::from_raw_parts_mut::<T>(data, num),
+                btvb: btvb,
+            })
+        }
+    }
+
+    pub fn set_transient_vertex_buffer<T>(&self, tvb: &TransientVertexBuffer<T>) {
+        unsafe { bgfx_sys::bgfx_set_transient_vertex_buffer(&tvb.btvb, 0, std::u32::MAX); }
+    }
+
+    pub fn set_transient_vertex_buffer_partial<T>(&self, tvb: &TransientVertexBuffer<T>, start_vertex: usize, num_vertices: usize) {
+        unsafe { bgfx_sys::bgfx_set_transient_vertex_buffer(&tvb.btvb, start_vertex as u32, num_vertices as u32); }
+    }
+
+    pub fn set_transient_index_buffer(&self, tib: &TransientIndexBuffer) {
+        unsafe { bgfx_sys::bgfx_set_transient_index_buffer(&tib.btib, 0, std::u32::MAX); }
+    }
+
+    pub fn set_transient_index_buffer_partial(&self, tib: &TransientIndexBuffer, first_index: usize, num_indices: usize) {
+        unsafe { bgfx_sys::bgfx_set_transient_index_buffer(&tib.btib, first_index as u32, num_indices as u32); }
     }
 
     /// Sets the index buffer to use for rendering.

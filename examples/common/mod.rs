@@ -101,11 +101,21 @@ pub fn load_program<'a, 'b>(bgfx: &'a Bgfx,
     let assets_path = format!("examples/assets/{}", exe_stem.to_str().unwrap());
     let vsh_path = format!("{}/{:?}/{}.bin", assets_path, renderer, vsh_name);
     let fsh_path = format!("{}/{:?}/{}.bin", assets_path, renderer, fsh_name);
-    let vsh_mem = bgfx::Memory::copy(bgfx, &load_file(&vsh_path));
-    let fsh_mem = bgfx::Memory::copy(bgfx, &load_file(&fsh_path));
+    let vsh_bin = load_file(&vsh_path);
+    let fsh_bin = load_file(&fsh_path);
+    create_program(bgfx, &vsh_bin, &fsh_bin)
+}
+
+/// Creates a program containing two shaders from they in-memory representation.
+#[allow(dead_code)]
+pub fn create_program<'a, 'b>(bgfx: &'a Bgfx,
+                            vsh_bin: &'b [u8],
+                            fsh_bin: &'b [u8])
+                            -> bgfx::Program<'a> {
+    let vsh_mem = bgfx::Memory::copy(bgfx, vsh_bin);
+    let fsh_mem = bgfx::Memory::copy(bgfx, fsh_bin);
     let vsh = bgfx::Shader::new(vsh_mem);
     let fsh = bgfx::Shader::new(fsh_mem);
-
     bgfx::Program::new(vsh, fsh)
 }
 
