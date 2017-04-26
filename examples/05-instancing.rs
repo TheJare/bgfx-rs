@@ -11,7 +11,7 @@ mod common;
 
 use bgfx::*;
 use cgmath::{Decomposed, Deg, Matrix4, Point3, Quaternion, Rad, Transform, Vector3, Vector4, Euler};
-use common::EventQueue;
+use common::*;
 use time::PreciseTime;
 
 
@@ -183,8 +183,11 @@ impl<'a> Cubes<'a> {
 
                 // Set view and projection matrix for view 0.
                 let aspect = (self.width as f32) / (self.height as f32);
-                let view = Matrix4::look_at(eye, at, up);
-                let proj = cgmath::perspective(Deg(60.0), aspect, 0.1, 100.0);
+                let mut view = Matrix4::look_at(eye, at, up);
+                correct_view_matrix(&mut view);
+                let mut proj = cgmath::perspective(Deg(60.0), aspect, 0.1, 100.0);
+                correct_proj_matrix(&mut proj, caps.homogeneousDepth);
+
                 self.bgfx.set_view_transform(0, view.as_ref(), proj.as_ref());
 
 				if let Some(idb) = self.bgfx.alloc_instance_data_buffer::<InstanceData>(11*11) {
@@ -204,9 +207,10 @@ impl<'a> Cubes<'a> {
                                 mtx: Matrix4::from(modifier).cast::<f32>(),
                                 color: Vector4::new(((time+(xx as f64)/11.0).sin() as f32)*0.5f32 + 0.5f32,
                                                     ((time+(yy as f64)/11.0).cos() as f32)*0.5f32 + 0.5f32,
-                                                    (time.sin() as f32)*0.5f32 + 0.5f32,
+                                                    ((time*3.0).sin() as f32)*0.5f32 + 0.5f32,
                                                     1f32)
                             };
+                            correct_model_matrix(&mut idb.data[i].mtx);
                             i += 1;
                         }
                     }

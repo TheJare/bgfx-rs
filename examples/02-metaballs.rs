@@ -14,12 +14,14 @@ mod common;
 
 use bgfx::*;
 use cgmath::{Decomposed, Deg, Matrix4, Point3, Quaternion, Rad, Transform, Vector3, Euler, InnerSpace, Zero};
-use common::EventQueue;
+use common::*;
 use time::PreciseTime;
 use std::default::Default;
 
 const VS_METABALLS_OPENGL: &'static [u8] = include_bytes!("assets/02-metaballs/OpenGL/vs_metaballs.bin");
 const FS_METABALLS_OPENGL: &'static [u8] = include_bytes!("assets/02-metaballs/OpenGL/fs_metaballs.bin");
+const VS_METABALLS_D3D11: &'static [u8] = include_bytes!("assets/02-metaballs/Direct3D11/vs_metaballs.bin");
+const FS_METABALLS_D3D11: &'static [u8] = include_bytes!("assets/02-metaballs/Direct3D11/fs_metaballs.bin");
 
 #[repr(packed)]
 struct PosNormalColorVertex {
@@ -526,7 +528,8 @@ impl<'a> Metaballs<'a> {
         self.decl = Some(PosNormalColorVertex::build_decl());
 
         // Create program from embedded shaders.
-        self.program = Some(common::create_program(&self.bgfx, VS_METABALLS_OPENGL, FS_METABALLS_OPENGL));
+        // self.program = Some(common::create_program(&self.bgfx, VS_METABALLS_OPENGL, FS_METABALLS_OPENGL));
+        self.program = Some(common::create_program(&self.bgfx, VS_METABALLS_D3D11, FS_METABALLS_D3D11));
 
         self.time = Some(PreciseTime::now());
 
@@ -569,16 +572,20 @@ impl<'a> Metaballs<'a> {
             self.bgfx.dbg_text_print(0, 1, 0x4f, "examples/02-metaballs.rs");
             self.bgfx.dbg_text_print(0, 2, 0x6f, "Description: Rendering with transient buffers and embedding shaders.");
 
-            let at = Point3::new(0.0, 0.0, 0.0);
-            let eye = Point3::new(0.0, 0.0, 50.0);
+            let at = Point3::new(1.0, 2.0, 3.0);
+            let eye = Point3::new(4.0, 5.0, -50.0);
             let up = Vector3::new(0.0, 1.0, 0.0);
 
             // TODO: Support for HMD rendering
 
+	        let caps = self.bgfx.caps();
             // Set view and projection matrix for view 0.
             let aspect = (self.width as f32) / (self.height as f32);
-            let view = Matrix4::look_at(eye, at, up);
-            let proj = cgmath::perspective(Deg(60.0), aspect, 0.1, 100.0);
+			let mut view = Matrix4::look_at(eye, at, up);
+			correct_view_matrix(&mut view);
+			let mut proj = cgmath::perspective(Deg(60.0), aspect, 0.1, 100.0);
+			correct_proj_matrix(&mut proj, caps.homogeneousDepth);
+
             self.bgfx.set_view_transform(0, view.as_ref(), proj.as_ref());
 
 			// Allocate 32K vertices in transient vertex buffer.
@@ -709,10 +716,11 @@ impl<'a> Metaballs<'a> {
 				let prof_triangulate = prof_triangulate.to(PreciseTime::now()).num_microseconds().unwrap_or(0) as f32 / 1000f32;
 
                 let mut modifier = Decomposed::one();
-                modifier.rot = Quaternion::from(Euler::new(Rad(time),
-                                                    Rad(time * 0.67),
+                modifier.rot = Quaternion::from(Euler::new(Rad(time * 0.67),
+                                                    Rad(time),
                                                     Rad(0.0)));
-                let mtx = Matrix4::from(modifier).cast::<f32>();
+                let mut mtx = Matrix4::from(modifier).cast::<f32>();
+				correct_model_matrix(&mut mtx);
 
                 // Set model matrix for rendering.
                 self.bgfx.set_transform(mtx.as_ref());
@@ -750,7 +758,8 @@ impl<'a> Metaballs<'a> {
 }
 
 fn example(events: EventQueue) {
-    let bgfx = bgfx::init(RendererType::OpenGL, None, None).unwrap();
+    // let bgfx = bgfx::init(RendererType::OpenGL, None, None).unwrap();
+    let bgfx = bgfx::init(RendererType::Direct3D11, None, None).unwrap();
     let mut metaballs = Metaballs::new(&bgfx, events);
     metaballs.init();
     while metaballs.update() {}

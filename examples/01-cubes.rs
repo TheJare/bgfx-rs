@@ -10,7 +10,7 @@ mod common;
 
 use bgfx::*;
 use cgmath::{Decomposed, Deg, Matrix4, Point3, Quaternion, Rad, Transform, Vector3, Euler};
-use common::EventQueue;
+use common::*;
 use time::PreciseTime;
 
 
@@ -155,10 +155,13 @@ impl<'a> Cubes<'a> {
 
             // TODO: Support for HMD rendering
 
+	        let caps = self.bgfx.caps();
             // Set view and projection matrix for view 0.
             let aspect = (self.width as f32) / (self.height as f32);
-            let view = Matrix4::look_at(eye, at, up);
-            let proj = cgmath::perspective(Deg(60.0), aspect, 0.1, 100.0);
+            let mut view = Matrix4::look_at(eye, at, up);
+            correct_view_matrix(&mut view);
+            let mut proj = cgmath::perspective(Deg(60.0), aspect, 0.1, 100.0);
+            correct_proj_matrix(&mut proj, caps.homogeneousDepth);
             self.bgfx.set_view_transform(0, view.as_ref(), proj.as_ref());
 
             // Set view 0 default viewport.
@@ -172,13 +175,14 @@ impl<'a> Cubes<'a> {
             for yy in 0..11 {
                 for xx in 0..11 {
                     let mut modifier = Decomposed::one();
-                    modifier.rot = Quaternion::from(Euler::new(Rad((time / 0.21)),
-                                                          Rad((time / 0.37)),
+                    modifier.rot = Quaternion::from(Euler::new(Rad((time + (xx as f64) * 0.21)),
+                                                          Rad((time + (yy as f64) * 0.37)),
                                                           Rad(0.0)));
                     modifier.disp = Vector3::new(-15.0 + (xx as f64) * 3.0,
                                                  -15.0 + (yy as f64) * 3.0,
                                                  0.0);
-                    let mtx = Matrix4::from(modifier).cast::<f32>();
+                    let mut mtx = Matrix4::from(modifier).cast::<f32>();
+                    correct_model_matrix(&mut mtx);
 
                     // Set model matrix for rendering.
                     self.bgfx.set_transform(mtx.as_ref());

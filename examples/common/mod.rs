@@ -3,11 +3,13 @@
 
 extern crate bgfx;
 extern crate glutin;
+extern crate cgmath;
 extern crate libc;
 
 use bgfx::{Bgfx, PlatformData, RenderFrame};
 
 use glutin::{Api, GlRequest, Window, WindowBuilder};
+use cgmath::Matrix4;
 
 use std::env;
 use std::fs::File;
@@ -118,6 +120,25 @@ pub fn create_program<'a, 'b>(bgfx: &'a Bgfx,
     let fsh = bgfx::Shader::new(fsh_mem);
     bgfx::Program::new(vsh, fsh)
 }
+
+pub fn correct_view_matrix<T: cgmath::BaseFloat>(m: &mut Matrix4<T>) {
+    m.x.x = -m.x.x; m.y.x = -m.y.x; m.z.x = -m.z.x; m.w.x = -m.w.x;
+    m.x.z = -m.x.z; m.y.z = -m.y.z; m.z.z = -m.z.z; m.w.z = -m.w.z;
+}
+
+pub fn correct_proj_matrix<T: cgmath::BaseFloat>(m: &mut Matrix4<T>, homogeneous_depth: bool) {
+    m.z.x = -m.z.x; m.z.y = -m.z.y; m.z.z = -m.z.z; m.z.w = -m.z.w;
+    if !homogeneous_depth {
+
+    }
+}
+
+pub fn correct_model_matrix<T: cgmath::BaseFloat>(m: &mut Matrix4<T>) {
+    let t = m.x.y; m.x.y = m.y.x; m.y.x = t;
+    let t = m.x.z; m.x.z = m.z.x; m.z.x = t;
+    let t = m.z.y; m.z.y = m.y.z; m.y.z = t;
+}
+
 
 /// Set the platform data to be used by BGFX.
 #[cfg(target_os = "linux")]
