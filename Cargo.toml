@@ -11,7 +11,7 @@ libc = "0.2.21"
 path = "bgfx-sys/"
 
 [dev-dependencies]
-cgmath = "0.13.0"
+cgmath = "0.14.0"
 glutin = "0.7.4"
 time = "0.1.36"
 maplit = "*"

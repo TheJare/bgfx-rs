@@ -23,8 +23,12 @@ use std::collections::HashMap;
 
 const VS_METABALLS_OPENGL: &'static [u8] = include_bytes!("assets/02-metaballs/OpenGL/vs_metaballs.bin");
 const FS_METABALLS_OPENGL: &'static [u8] = include_bytes!("assets/02-metaballs/OpenGL/fs_metaballs.bin");
+const VS_METABALLS_VULKAN: &'static [u8] = include_bytes!("assets/02-metaballs/Vulkan/vs_metaballs.bin");
+const FS_METABALLS_VULKAN: &'static [u8] = include_bytes!("assets/02-metaballs/Vulkan/fs_metaballs.bin");
 const VS_METABALLS_D3D11: &'static [u8] = include_bytes!("assets/02-metaballs/Direct3D11/vs_metaballs.bin");
 const FS_METABALLS_D3D11: &'static [u8] = include_bytes!("assets/02-metaballs/Direct3D11/fs_metaballs.bin");
+const VS_METABALLS_D3D9: &'static [u8] = include_bytes!("assets/02-metaballs/Direct3D9/vs_metaballs.bin");
+const FS_METABALLS_D3D9: &'static [u8] = include_bytes!("assets/02-metaballs/Direct3D9/fs_metaballs.bin");
 struct PlatformShaders {
 	pub vs: &'static [u8],
 	pub fs: &'static [u8],
@@ -32,6 +36,8 @@ struct PlatformShaders {
 lazy_static! {
 	static ref G_SHADERS: HashMap<&'static str, PlatformShaders> = hashmap!{
 		"OpenGL" => (PlatformShaders { vs: &VS_METABALLS_OPENGL, fs: &FS_METABALLS_OPENGL }),
+		"Vulkan" => (PlatformShaders { vs: &VS_METABALLS_VULKAN, fs: &FS_METABALLS_VULKAN }),
+		"Direct3D9" => (PlatformShaders { vs: &VS_METABALLS_D3D9, fs: &FS_METABALLS_D3D9 }),
 		"Direct3D11" => (PlatformShaders { vs: &VS_METABALLS_D3D11, fs: &FS_METABALLS_D3D11 })
 	};
 }
@@ -583,7 +589,7 @@ impl<'a> Metaballs<'a> {
 
             // Use debug font to print information about this example.
             self.bgfx.dbg_text_clear(None, None);
-            self.bgfx.dbg_text_print(0, 1, 0x4f, "examples/02-metaballs.rs");
+            self.bgfx.dbg_text_print(0, 1, 0x4f, &format!("examples/02-metaballs.rs (using {:?})", self.bgfx.get_renderer_type()));
             self.bgfx.dbg_text_print(0, 2, 0x6f, "Description: Rendering with transient buffers and embedding shaders.");
 
             let at = Point3::new(1.0, 2.0, 3.0);
@@ -773,6 +779,8 @@ impl<'a> Metaballs<'a> {
 
 fn example(events: EventQueue) {
     let bgfx = bgfx::init(RendererType::OpenGL, None, None).unwrap();
+    // let bgfx = bgfx::init(RendererType::Vulkan, None, None).unwrap();
+    // let bgfx = bgfx::init(RendererType::Direct3D9, None, None).unwrap();
     // let bgfx = bgfx::init(RendererType::Direct3D11, None, None).unwrap();
     let mut metaballs = Metaballs::new(&bgfx, events);
     metaballs.init();
