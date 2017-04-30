@@ -9,6 +9,8 @@ extern crate bgfx;
 extern crate cgmath;
 extern crate glutin;
 extern crate time;
+#[macro_use] extern crate maplit;
+#[macro_use] extern crate lazy_static;
 
 mod common;
 
@@ -17,11 +19,22 @@ use cgmath::{Decomposed, Deg, Matrix4, Point3, Quaternion, Rad, Transform, Vecto
 use common::*;
 use time::PreciseTime;
 use std::default::Default;
+use std::collections::HashMap;
 
 const VS_METABALLS_OPENGL: &'static [u8] = include_bytes!("assets/02-metaballs/OpenGL/vs_metaballs.bin");
 const FS_METABALLS_OPENGL: &'static [u8] = include_bytes!("assets/02-metaballs/OpenGL/fs_metaballs.bin");
 const VS_METABALLS_D3D11: &'static [u8] = include_bytes!("assets/02-metaballs/Direct3D11/vs_metaballs.bin");
 const FS_METABALLS_D3D11: &'static [u8] = include_bytes!("assets/02-metaballs/Direct3D11/fs_metaballs.bin");
+struct PlatformShaders {
+	pub vs: &'static [u8],
+	pub fs: &'static [u8],
+}
+lazy_static! {
+	static ref G_SHADERS: HashMap<&'static str, PlatformShaders> = hashmap!{
+		"OpenGL" => (PlatformShaders { vs: &VS_METABALLS_OPENGL, fs: &FS_METABALLS_OPENGL }),
+		"Direct3D11" => (PlatformShaders { vs: &VS_METABALLS_D3D11, fs: &FS_METABALLS_D3D11 })
+	};
+}
 
 #[repr(packed)]
 struct PosNormalColorVertex {
@@ -528,8 +541,9 @@ impl<'a> Metaballs<'a> {
         self.decl = Some(PosNormalColorVertex::build_decl());
 
         // Create program from embedded shaders.
-        // self.program = Some(common::create_program(&self.bgfx, VS_METABALLS_OPENGL, FS_METABALLS_OPENGL));
-        self.program = Some(common::create_program(&self.bgfx, VS_METABALLS_D3D11, FS_METABALLS_D3D11));
+		let renderer = self.bgfx.get_renderer_type();
+		let shaders = &G_SHADERS.get::<str>(&format!("{:?}", renderer)).unwrap();
+        self.program = Some(common::create_program(&self.bgfx, shaders.vs, shaders.fs));
 
         self.time = Some(PreciseTime::now());
 
@@ -758,8 +772,8 @@ impl<'a> Metaballs<'a> {
 }
 
 fn example(events: EventQueue) {
-    // let bgfx = bgfx::init(RendererType::OpenGL, None, None).unwrap();
-    let bgfx = bgfx::init(RendererType::Direct3D11, None, None).unwrap();
+    let bgfx = bgfx::init(RendererType::OpenGL, None, None).unwrap();
+    // let bgfx = bgfx::init(RendererType::Direct3D11, None, None).unwrap();
     let mut metaballs = Metaballs::new(&bgfx, events);
     metaballs.init();
     while metaballs.update() {}
