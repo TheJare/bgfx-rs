@@ -1,4 +1,5 @@
 // Copyright (c) 2015-2016, Johan Sköld.
+// Copyright (c) 2017, Javier Arevalo
 // License: http://opensource.org/licenses/ISC
 
 extern crate bgfx;
@@ -9,7 +10,7 @@ extern crate time;
 mod common;
 
 use bgfx::*;
-use cgmath::{Decomposed, Deg, Matrix4, Point3, Quaternion, Rad, Transform, Vector3, Euler};
+use cgmath::{Decomposed, Deg, Matrix4, Point3, Quaternion, Rad, Transform, Vector3, Vector4, Euler};
 use common::*;
 use time::PreciseTime;
 
@@ -29,6 +30,12 @@ impl PosColorVertex {
             .add(Attrib::Color0, 4, AttribType::Uint8(true))
             .end()
     }
+}
+
+#[repr(C)]
+struct InstanceData {
+    mtx: Matrix4<f32>,
+    color: Vector4<f32>
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -122,9 +129,13 @@ impl<'a> Cubes<'a> {
         self.ibh = Some(IndexBuffer::new(Memory::reference(self.bgfx, &CUBE_INDICES), BUFFER_NONE));
 
         // Create program from shaders.
-        self.program = Some(common::load_program(&self.bgfx, "vs_cubes", "fs_cubes"));
+        self.program = Some(common::load_program(&self.bgfx, "vs_instancing", "fs_instancing"));
 
         self.time = Some(PreciseTime::now());
+
+        let caps = self.bgfx.caps();
+        println!("{:#?}", caps);
+
     }
 
     fn shutdown(&mut self) {
@@ -135,6 +146,14 @@ impl<'a> Cubes<'a> {
 
     fn update(&mut self) -> bool {
         if !self.events.handle_events(&self.bgfx, &mut self.width, &mut self.height, self.reset) {
+
+            // Set view 0 default viewport.
+            self.bgfx.set_view_rect(0, 0, 0, self.width, self.height);
+
+            // This dummy draw call is here to make sure that view 0 is cleared if no other draw
+            // calls are submitted to view 0.
+            self.bgfx.touch(0);
+
             let now = PreciseTime::now();
             let frame_time = self.last.unwrap_or(now).to(now);
             self.last = Some(now);
@@ -145,51 +164,63 @@ impl<'a> Cubes<'a> {
             // Use debug font to print information about this example.
             let frame_info = format!("Frame: {:7.3}[ms]", frame_time.num_milliseconds());
             self.bgfx.dbg_text_clear(None, None);
-            self.bgfx.dbg_text_print(0, 1, 0x4f, "examples/01-cubes.rs");
-            self.bgfx.dbg_text_print(0, 2, 0x6f, "Description: Rendering simple static mesh.");
+            self.bgfx.dbg_text_print(0, 1, 0x4f, "examples/05-instancing.rs");
+            self.bgfx.dbg_text_print(0, 2, 0x6f, "Description: Geometry instancing.");
             self.bgfx.dbg_text_print(0, 3, 0x0f, &frame_info);
 
-            let at = Point3::new(0.0, 0.0, 0.0);
-            let eye = Point3::new(0.0, 0.0, -35.0);
-            let up = Vector3::new(0.0, 1.0, 0.0);
+            let caps = self.bgfx.caps();
 
-            // TODO: Support for HMD rendering
+            if !caps.supported.contains(CAPS_INSTANCING) {
+                let blink = if 0 != ((time*3.0) as u32 & 1) { 0x1f } else { 0x01 };
+                self.bgfx.dbg_text_print(0, 5, blink, " Instancing is not supported by GPU. ");
+            } else {
 
-	        let caps = self.bgfx.caps();
-            // Set view and projection matrix for view 0.
-            let aspect = (self.width as f32) / (self.height as f32);
-            let mut view = Matrix4::look_at(eye, at, up);
-            correct_view_matrix(&mut view);
-            let mut proj = cgmath::perspective(Deg(60.0), aspect, 0.1, 100.0);
-            correct_proj_matrix(&mut proj, caps.homogeneousDepth);
-            self.bgfx.set_view_transform(0, view.as_ref(), proj.as_ref());
+                let at = Point3::new(0.0, 0.0, 0.0);
+                let eye = Point3::new(0.0, 0.0, -35.0);
+                let up = Vector3::new(0.0, 1.0, 0.0);
 
-            // Set view 0 default viewport.
-            self.bgfx.set_view_rect(0, 0, 0, self.width, self.height);
+                // TODO: Support for HMD rendering
 
-            // This dummy draw call is here to make sure that view 0 is cleared if no other draw
-            // calls are submitted to view 0.
-            self.bgfx.touch(0);
+                // Set view and projection matrix for view 0.
+                let aspect = (self.width as f32) / (self.height as f32);
+                let mut view = Matrix4::look_at(eye, at, up);
+                correct_view_matrix(&mut view);
+                let mut proj = cgmath::perspective(Deg(60.0), aspect, 0.1, 100.0);
+                correct_proj_matrix(&mut proj, caps.homogeneousDepth);
 
-            // Submit 11x11 cubes
-            for yy in 0..11 {
-                for xx in 0..11 {
-                    let mut modifier = Decomposed::one();
-                    modifier.rot = Quaternion::from(Euler::new(Rad((time + (xx as f64) * 0.21)),
-                                                          Rad((time + (yy as f64) * 0.37)),
-                                                          Rad(0.0)));
-                    modifier.disp = Vector3::new(-15.0 + (xx as f64) * 3.0,
-                                                 -15.0 + (yy as f64) * 3.0,
-                                                 0.0);
-                    let mut mtx = Matrix4::from(modifier).cast::<f32>();
-                    correct_model_matrix(&mut mtx);
+                self.bgfx.set_view_transform(0, view.as_ref(), proj.as_ref());
 
-                    // Set model matrix for rendering.
-                    self.bgfx.set_transform(mtx.as_ref());
+				if let Some(idb) = self.bgfx.alloc_instance_data_buffer::<InstanceData>(11*11) {
+
+                    // Submit 11x11 cubes
+                    let mut i = 0;
+                    for yy in 0..11 {
+                        for xx in 0..11 {
+                            let mut modifier = Decomposed::one();
+                            modifier.rot = Quaternion::from(Euler::new(Rad((time + (xx as f64) * 0.21)),
+                                                                Rad((time + (yy as f64) * 0.37)),
+                                                                Rad(0.0)));
+                            modifier.disp = Vector3::new(-15.0 + (xx as f64) * 3.0,
+                                                        -15.0 + (yy as f64) * 3.0,
+                                                        0.0);
+                            idb.data[i] = InstanceData {
+                                mtx: Matrix4::from(modifier).cast::<f32>(),
+                                color: Vector4::new(((time+(xx as f64)/11.0).sin() as f32)*0.5f32 + 0.5f32,
+                                                    ((time+(yy as f64)/11.0).cos() as f32)*0.5f32 + 0.5f32,
+                                                    ((time*3.0).sin() as f32)*0.5f32 + 0.5f32,
+                                                    1f32)
+                            };
+                            correct_model_matrix(&mut idb.data[i].mtx);
+                            i += 1;
+                        }
+                    }
 
                     // Set vertex and index buffer.
                     self.bgfx.set_vertex_buffer(self.vbh.as_ref().unwrap());
                     self.bgfx.set_index_buffer(self.ibh.as_ref().unwrap());
+
+                    // Set instance data buffer.
+                    self.bgfx.set_instance_data_buffer(idb);
 
                     // Set render states.
                     self.bgfx.set_state(STATE_DEFAULT, None);

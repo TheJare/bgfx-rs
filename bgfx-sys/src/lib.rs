@@ -400,21 +400,3 @@ macro_rules! BGFX_STATE_BLEND_FUNC_RT_2E {
 macro_rules! BGFX_STATE_BLEND_FUNC_RT_3E {
     ($src:expr, $dst:expr, $equation:expr) => (BGFX_STATE_BLEND_FUNC_RT_xE!($src, $dst, $equation) << 22)
 }
-
-// ---------------
-
-impl fmt::Debug for bgfx_caps {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Caps {{ rendererType: {}, supported: 0x{:x}, vendorId: 0x{:x}, deviceId: {}, homogeneousDepth: {}, originBottomLeft: {}, numGPUs: {}, limits: {:?}, formats: [ {}] }}",
-        self.rendererType,
-        self.supported,
-        self.vendorId,
-        self.deviceId,
-        self.homogeneousDepth,
-        self.originBottomLeft,
-        self.numGPUs,
-        self.limits,
-        self.formats.iter().fold(String::new(), |acc, &v| { format!("{}0x{:x}, ", acc, v)}))
-    }
-}
-
