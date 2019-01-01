@@ -1,3 +1,5 @@
+  *Note*: I stopped working on this fork a long time ago. The most active fork of bgfx-rs seems to be [https://github.com/fuzzybinary/bgfx-rs](https://github.com/fuzzybinary/bgfx-rs).
+
 bgfx-rs [![travis-ci status](https://travis-ci.org/rhoot/bgfx-rs.svg?branch=master)](https://travis-ci.org/rhoot/bgfx-rs) [![appveyor status](https://ci.appveyor.com/api/projects/status/github/rhoot/bgfx-rs?branch=master&svg=true)](https://ci.appveyor.com/project/rhoot/bgfx-rs/branch/master)
 =======
 
